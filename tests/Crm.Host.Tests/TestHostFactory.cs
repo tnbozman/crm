@@ -17,15 +17,19 @@ namespace Crm.Host.Tests;
 public sealed class TestHostFactory : WebApplicationFactory<Program>
 {
     public const string ProtectedPath = "/api/v1/test-only/protected";
+    public const string ThrowingPath = "/api/v1/test-only/throws";
+    public const string ExceptionDetail = "sensitive-internal-detail";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder) =>
         builder.ConfigureTestServices(services => services.AddSingleton<IApiEndpoints, TestOnlyEndpoints>());
 
     /// <summary>A client whose requests are authenticated as a test user (replaced by FakeAuthHandler in S0-9).</summary>
-    public HttpClient CreateSignedInClient() =>
-        WithWebHostBuilder(builder => builder.ConfigureTestServices(services => services
-                .AddAuthentication(SignedInHandler.SchemeName)
-                .AddScheme<AuthenticationSchemeOptions, SignedInHandler>(SignedInHandler.SchemeName, configureOptions: null)))
+    public HttpClient CreateSignedInClient(string environment = "Development") =>
+        WithWebHostBuilder(builder => builder
+                .UseEnvironment(environment)
+                .ConfigureTestServices(services => services
+                    .AddAuthentication(SignedInHandler.SchemeName)
+                    .AddScheme<AuthenticationSchemeOptions, SignedInHandler>(SignedInHandler.SchemeName, configureOptions: null)))
             .CreateClient();
 
     private sealed class SignedInHandler(
@@ -44,6 +48,10 @@ public sealed class TestHostFactory : WebApplicationFactory<Program>
 
     private sealed class TestOnlyEndpoints : IApiEndpoints
     {
-        public void Map(IEndpointRouteBuilder api) => api.MapGet("/test-only/protected", () => Results.Ok("secret"));
+        public void Map(IEndpointRouteBuilder api)
+        {
+            api.MapGet("/test-only/protected", () => Results.Ok("secret"));
+            api.MapGet("/test-only/throws", IResult () => throw new InvalidOperationException(ExceptionDetail));
+        }
     }
 }
