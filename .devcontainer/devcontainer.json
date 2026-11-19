@@ -8,7 +8,7 @@
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/azure-cli:1": {}
   },
-  "forwardPorts": [5000, 5001, 5173, 1433, 8025],
+  "forwardPorts": [5000, 5001, 5173, "db:1433", 8025],
   "remoteEnv": {
     "CRM_SQL_SERVER": "db",
     "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}",

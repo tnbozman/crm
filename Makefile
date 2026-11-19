@@ -76,6 +76,7 @@ lint: format-check   ## C# format check, ESLint, Prettier check, vue-tsc
 	@bash scripts/checks/make-targets.sh
 	@bash scripts/checks/vscode-config.sh
 	@bash scripts/checks/ci-config.sh
+	@bash scripts/checks/devcontainer-config.sh
 	pnpm --dir $(WEB) lint
 	pnpm --dir $(WEB) typecheck
 

@@ -23,8 +23,8 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: *dev-sql-password
-    ports:
-      - "1433:1433"
+    # No published ports: the development password is public. The app container reaches SQL Server as `db`;
+    # host tools use VS Code port forwarding ("db:1433" in devcontainer.json), which binds to localhost only.
     volumes:
       - sqldata:/var/opt/mssql
     healthcheck:

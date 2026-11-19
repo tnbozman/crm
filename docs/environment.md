@@ -124,6 +124,8 @@ volumes:
   sqldata:
 ```
 
+> **Changed in S0-10 (repository made public):** the `db` service publishes **no ports**. The development password is public, so SQL Server is reachable only inside the compose network (`db`) and through VS Code forwarding (`"db:1433"`, localhost-only on the developer's machine). The password is defined once with a YAML anchor and passed to the app container as `CRM_SQL_PASSWORD` (S0-9). `scripts/checks/devcontainer-config.sh` (in `make lint`) enforces this.
+
 Notes: the `workspaces/crm` path must match `workspaceFolder`; the SA password is for the local container only and never used in Azure; S11 adds a `mailpit` service (ports 1025, 8025). **verify**: the sqlcmd path in the health check for the chosen image.
 
 `.devcontainer/post-create.sh` must: `dotnet tool restore`, `corepack enable`, `pnpm install` in `src/web`, `make hooks`, wait for the database, run `make db-reset`, print `make help`. It must be idempotent.

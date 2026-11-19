@@ -34,6 +34,12 @@ Date: 2026-11-19 (UTC). Commits `5b37872`..HEAD on `main`. **Status: local work 
 - **The audit gate is High or Critical.** NuGet Audit, however, fails restore on *any* severity (warnings as errors). That is stricter, and could block builds when a new low advisory appears. The fix then is to upgrade, or as a last resort to suppress that advisory with `NuGetAuditSuppress` and a dated note.
 - **The SBOM covers what ships** (`Crm.Host` with its references, and npm `--prod`), not test tooling.
 
+## Repository made public (2026-11-19)
+
+- Scanned before the first push: commit emails are all GitHub `noreply`, and no secrets are tracked (the only password-like strings are the CI per-run generator and the development-only SQL password).
+- Because the development SQL password is now public, the devcontainer no longer publishes SQL Server on the host (`1433:1433` removed). Host tools use VS Code forwarding `db:1433` (localhost only). `scripts/checks/devcontainer-config.sh` (in `make lint`) failed on the old configuration and on a planted re-exposed port, then passed. **A container rebuild applies it.**
+- Secret scanning and push protection are free on public repositories (pending: enable in settings). Fork PRs: set Actions to require approval for external contributors. The workflows hold no secrets and have read-only permissions.
+
 ## Pending on GitHub (done-when)
 
 - [ ] CI green on a PR. Record the run URL here.
