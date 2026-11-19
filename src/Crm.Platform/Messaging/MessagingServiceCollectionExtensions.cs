@@ -4,11 +4,17 @@ namespace Crm.Platform.Messaging;
 
 public static class MessagingServiceCollectionExtensions
 {
+    /// <summary>Registers the mediator and its pipeline. Call once, in the host.</summary>
     public static IServiceCollection AddMediator(this IServiceCollection services)
     {
         services.AddScoped<Mediator>();
         services.AddScoped<IMediator>(sp => sp.GetRequiredService<Mediator>());
         services.AddScoped<IEventPublisher>(sp => sp.GetRequiredService<Mediator>());
+        services.AddScoped<MessageContext>();
+        services.AddScoped<IMessageContext>(sp => sp.GetRequiredService<MessageContext>());
+
+        // The pipeline, outermost first (ADR-009).
+        services.AddScoped<IRequestBehaviour, CorrelationBehaviour>();
         EventTypesIn(services);
         return services;
     }
