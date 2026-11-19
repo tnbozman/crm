@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Crm.Host/Crm.Host.csproj" />
+    <Project Path="src/Crm.Migrator/Crm.Migrator.csproj" />
+    <Project Path="src/Crm.Platform.Testing/Crm.Platform.Testing.csproj" />
+    <Project Path="src/Crm.Platform/Crm.Platform.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Crm.Architecture.Tests/Crm.Architecture.Tests.csproj" />
+  </Folder>
+</Solution>
