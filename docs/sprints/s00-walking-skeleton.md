@@ -49,13 +49,15 @@ Done when: `dotnet build` clean with warnings-as-errors; package versions record
 
 Evidence: [docs/evidence/s00/S0-2-build-baseline.md](../evidence/s00/S0-2-build-baseline.md); ADR-003 (test runner), ADR-010 (package baseline).
 
-### S0-3 Makefile (E46)
+### ✅ S0-3 Makefile (E46)
 
 Tests first: `scripts/checks/make-targets.sh` asserts every target listed in `CLAUDE.md` appears in `make help`, and that `make verify` exits non-zero when a test is made to fail (temporary).
 
 Implement: Makefile per `docs/environment.md` §3.
 
 Done when: every target in the spec runs or is explicitly stubbed with a clear message and a TODO story ID.
+
+Evidence: [docs/evidence/s00/S0-3-makefile.md](../evidence/s00/S0-3-makefile.md).
 
 ### S0-4 Host with health endpoint (E46)
 

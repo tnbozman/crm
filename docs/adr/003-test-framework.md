@@ -21,7 +21,7 @@ The plan defaults to xUnit v3, Shouldly and NSubstitute. On the .NET 10 SDK, xun
   - `make test-int`: `--filter-trait "Category=Integration"`
   - `make test-arch`: `--filter-trait "Category=Architecture"`
   
-  The Makefile spec in `docs/environment.md` §3 is updated in S0-3.
-- When a filter matches no tests in a project, MTP exits with code 8 ("zero tests ran"). S0-3 must handle this, for example with `--minimum-expected-tests 0` or by narrowing to test projects, and must not hide real failures.
-- Coverage moves from VSTest `--collect:"XPlat Code Coverage"` to an MTP coverage extension. Choose it when the `coverage` target is implemented.
+  Implemented in the `Makefile` in S0-3.
+- When a filter matches no tests in a project, MTP exits with code 8 ("zero tests ran"). The Makefile passes `--ignore-exit-code 8`. S0-3 checked that planted failures still exit non-zero in each category.
+- Coverage uses `Microsoft.Testing.Extensions.CodeCoverage` (`--coverage --coverage-output-format cobertura`), reported by reportgenerator (`make coverage`, S0-3). Each test project references the extension.
 - VS Code C# Dev Kit Test Explorer supports MTP (checked in S0-8).

@@ -132,7 +132,11 @@ Notes: the `workspaces/crm` path must match `workspaceFolder`; the SA password i
 
 Recipes use tab indentation. Names are fixed; internals can change.
 
-> **Note (S0-2, ADR-003):** `dotnet test` runs on Microsoft.Testing.Platform. The VSTest `--filter` and `--collect` arguments below must become `--filter-trait`/`--filter-not-trait` and an MTP coverage extension when S0-3 implements these targets.
+> **Implemented in S0-3. The repository `Makefile` is now the source of truth.** It differs from the sketch below in these ways:
+> - Tests run on Microsoft.Testing.Platform (ADR-003). Filters are `--filter-trait`/`--filter-not-trait`, `--ignore-exit-code 8` tolerates projects with no matching tests, and `coverage` uses `--coverage` plus reportgenerator.
+> - The `help` pattern allows digits (`[a-zA-Z0-9_-]`); otherwise `test-e2e` never appears.
+> - `format-check` has a recipe and `lint` depends on it. `lint` also runs `scripts/checks/make-targets.sh`.
+> - Work owned by later stories is stubbed with `$(call todo,<story>,<message>)`, which prints `TODO(<story>)` and exits 0. `make-targets.sh` rejects a stub without a story ID.
 
 ```make
 .DEFAULT_GOAL := help
