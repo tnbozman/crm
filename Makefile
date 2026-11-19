@@ -17,7 +17,7 @@ todo = @echo "TODO($(1)): $(2)" >&2
         test test-unit test-int test-arch test-web test-e2e \
         lint format format-check api-client api-client-check \
         db-up db-reset migrate migration-add module-new \
-        publish check-spa verify ai-smoke coverage clean
+        publish check-dev check-spa verify ai-smoke coverage clean
 
 help:            ## list targets
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-18s %s\n", $$1, $$2}'
@@ -45,10 +45,12 @@ run:             ## run the host serving the built frontend (https://localhost:5
 	dotnet run --project $(HOST) --launch-profile https
 
 dev:             ## backend watch (https://localhost:5001) + Vite dev server with /api proxy (http://localhost:5173)
-	@trap 'kill 0' INT TERM; \
-	dotnet watch --project $(HOST) --launch-profile https -p:SkipFrontend=true & \
+	@# dotnet watch reads -p as --project, so SkipFrontend goes in as an environment variable (an MSBuild property).
+	@# If either process exits, wait -n returns and the EXIT trap stops the other.
+	@trap 'kill 0' INT TERM EXIT; \
+	SkipFrontend=true dotnet watch --project $(HOST) --launch-profile https & \
 	pnpm --dir $(WEB) dev & \
-	wait
+	wait -n
 
 dev-web:         ## Vite dev server only (http://localhost:5173; the debugger runs the host)
 	pnpm --dir $(WEB) dev
@@ -111,6 +113,9 @@ module-new:      ## scaffold a module: make module-new name=Directory
 
 publish:         ## publish the host (includes wwwroot)
 	dotnet publish $(HOST) -c Release -o artifacts/publish
+
+check-dev:       ## smoke test make dev (needs ports 5001 and 5173 free; not part of verify)
+	@bash scripts/checks/dev-smoke.sh
 
 check-spa:       ## frontend build checks: incremental build, clean publish contains the SPA
 	@bash scripts/checks/frontend-incremental.sh
