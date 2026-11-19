@@ -72,7 +72,7 @@ Rules:
 - **DTOs** are records in `Dtos/`; request DTOs are validated at the boundary; response DTOs never contain masked fields.
 - **Mapping** is explicit code in `Mapping/`; no reflection-based mapper unless an ADR approves one.
 - **No generic repository or unit-of-work wrapper.** Use the module `DbContext` in services.
-- Errors are thrown as typed exceptions from services and converted to problem details by the platform filter; controllers have no try/catch.
+- Errors are thrown as typed exceptions (`NotFoundException`, `ForbiddenException`, `RequestValidationException`, all in `Crm.Platform.Errors`) and converted to problem details by the global exception handler (`AddCrmErrorHandling`, an `IExceptionHandler`); nothing else catches to shape responses, and controllers have no try/catch. Use `InvalidOperationException` only for bugs and misconfiguration (a 500). Do not add an exception type without mapping it in the handler and testing it.
 - Controllers: `[ApiController]`, attribute routes `api/v1/<module>/<resource>`, `[Authorize(Policy=...)]`, `CancellationToken`, `[ProducesResponseType]`.
 - One controller per resource, one service per aggregate or use-case cluster; split a service that grows past ~300 lines.
 - Frontend feature folders mirror modules: `src/web/src/features/<module>/`.

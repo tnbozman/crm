@@ -93,6 +93,8 @@ Done when: test-assembly handlers answer a query and receive an event through th
 
 Evidence: [docs/evidence/s01/S1-3-mediator.md](../evidence/s01/S1-3-mediator.md); ADR-009 updated. Split into S1-3a (core), S1-3b (pipeline and host) and S1-3c (architecture rules). `Publish` is on a separate `IEventPublisher`; subscribers are `IEventSubscriber<T>`; requests name policies with `[RequiresPolicy]`; `IModule` gained `ContractsAssembly`. Modules register handlers in `AddServices` with `AddRequestHandler<T>()` and `AddEventSubscriber<T>()`.
 
+**Added scope (2026-11-19, at the developer's direction): global exception handler.** Typed exceptions were mapped only by an MVC filter, so the same exception thrown outside a controller action became a 500. Replaced by one `IExceptionHandler` (`CrmExceptionHandler`, `AddCrmErrorHandling`) covering every request; the filter is removed; expected 4xx are not logged as faults. Exception use across the code base reviewed; no further changes needed. Evidence: [docs/evidence/s01/S1-3-global-exception-handler.md](../evidence/s01/S1-3-global-exception-handler.md).
+
 ### S1-4 Module scaffolder (E46)
 
 Tests first: `scripts/checks/new-module.sh` runs `make module-new name=Zzz` in a temp copy, then `dotnet build` and `make test-arch` succeed; the generated module has Contracts, implementation, test project, DbContext, initial migration, endpoints stub, `Skills/` folder and web feature folder.

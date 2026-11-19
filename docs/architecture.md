@@ -59,7 +59,7 @@ HTTP request → Controller → Service → DbContext (Models) → SQL Server
 
 | Layer | Responsibility | May reference | Must not |
 | --- | --- | --- | --- |
-| Controller | Routing, authorisation attributes, model binding, status codes, calling one service method, returning DTOs | Services (interfaces), Dtos, `ICurrentUser` | Touch `DbContext` or Models; contain business rules; catch exceptions to shape errors (a filter does that) |
+| Controller | Routing, authorisation attributes, model binding, status codes, calling one service method, returning DTOs | Services (interfaces), Dtos, `ICurrentUser` | Touch `DbContext` or Models; contain business rules; catch exceptions to shape errors (the global exception handler does that) |
 | Service | Business rules, orchestration, transactions, writing integration events to the module's outbox, sending other modules' Contracts queries and commands through `IMediator` | `DbContext`, Models, Dtos, Mapping, `IMediator`, other modules' Contracts | Reference `HttpContext`, controllers or ASP.NET types; return Models to controllers; call `IMediator.Publish`; inject another module's services |
 | DTO | Shape of the HTTP contract: records with data annotations or validators, no behaviour | Nothing | Reference Models |
 | Model | EF Core entity: state plus invariants enforced through methods; private setters, no public parameterless constructor outside EF | Nothing outside the module | Be serialised or returned from any API; be used by other modules |
@@ -70,7 +70,7 @@ Rules:
 - No generic repository. Services use the module's `DbContext` directly; this keeps queries explicit and testable against real SQL.
 - Services expose an interface (`IOrganisationService`) used by controllers and handlers inside the module. Cross-module access is a Contracts message (`GetOrganisationSummary : IQuery<OrganisationSummary>`) sent through `IMediator` and handled in the owning module by a thin handler that delegates to its services (ADR-009). Contracts DTOs are distinct from API DTOs.
 - Queries project to DTOs (`Select`) rather than loading whole Models where the response is read-only.
-- Services throw typed domain exceptions (`NotFoundException`, `ConflictException`, `ValidationException`, `ForbiddenException`); a single exception filter in the platform maps them to RFC 9457 problem details. Controllers contain no try/catch.
+- Services throw typed exceptions from `Crm.Platform.Errors` (`NotFoundException` 404, `ForbiddenException` 403, `RequestValidationException` 400 with field errors; `ConflictException` 409 arrives with optimistic concurrency). One global `IExceptionHandler` (`CrmExceptionHandler`, registered by `AddCrmErrorHandling` and run by `UseExceptionHandler`) maps them to RFC 9457 problem details for every request: controllers, minimal endpoints and middleware alike. Their messages never reach the response, and they are not logged as faults. Any other exception is a bug: 500 with no detail, logged as an error. Controllers contain no try/catch.
 - Controllers use `[ApiController]`, attribute routing (`[Route("api/v1/<module>/<resource>")]`), `[Authorize]` with named policies, `CancellationToken` parameters, `ActionResult<T>` or `[ProducesResponseType]` for OpenAPI accuracy.
 - Models carry `OwnerTeamId`/`BusinessUnitId` where access-controlled; query filters live in the DbContext.
 - Module projects register their controllers with `AddApplicationPart` (through `IModule.ControllersAssembly` and `AddModules`) so `Crm.Host` finds them without reflection scanning of the whole app.
@@ -134,7 +134,7 @@ Outbox: each module owns `outbox_messages` and `inbox_messages` in its schema, m
 
 - MVC controllers per resource under `/api/v1/<module>/<resource>`, one controller class per resource, DTOs in and out, never EF models.
 - OpenAPI generated at build; `make api-client` produces `src/web/src/api/` TypeScript types. CI fails on drift.
-- RFC 9457 problem details through an exception filter and `ProblemDetails` factory, request validation (data annotations for simple rules, validators for rules needing services) at the boundary, ETag/rowversion for optimistic concurrency.
+- RFC 9457 problem details through the global exception handler and the problem details service, request validation (data annotations for simple rules, validators for rules needing services) at the boundary, ETag/rowversion for optimistic concurrency.
 - Fallback authorisation policy requires an authenticated user.
 - Anonymous callers get 401 for every `/api` route except `/api/v1/health`, including routes that do not exist, so routes cannot be probed. Signed-in callers get 404 problem details for unknown routes. Opening an endpoint means naming a policy in `HostPolicies` (only `Anonymous`, used by health and the SPA shell fallback), with a test. With controllers, that is `[Authorize(Policy = HostPolicies.Anonymous)]`, not `[AllowAnonymous]` (ADR-011). The built SPA in `wwwroot` is served as public static files.
 - The OpenAPI document is committed at `openapi/Crm.Host.json` and regenerated by `make api-client`.
