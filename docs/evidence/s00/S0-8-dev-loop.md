@@ -45,12 +45,14 @@ Taken read-only against a `Full stack` debug session started in VS Code (host pr
 
 Exit 0: lint (including `vscode-config.sh` and `make-targets.sh`), build, 6 unit, 4 integration and 8 architecture tests, 13 Vitest tests, `api-client-check`, and `check-spa`.
 
-## Demo step 5: to be performed in VS Code and noted in the sprint log
+## Demo step 5: performed 2026-11-19 by the developer; all passed (noted in the sprint log)
 
-This needs a person in VS Code. Pending at the time of writing:
+Performed in VS Code by the developer:
 
-- [ ] Run and debug the host (`Host (.NET)` or `Full stack`), and hit a breakpoint in `Program.cs` (for example, the health lambda).
-- [ ] Test Explorer (C# Dev Kit): run `GetHealth_Anonymous_Returns200WithStatusOk` and debug it to a breakpoint.
-- [ ] Test Explorer (Vitest): run `App › shows the health status returned by the API` and debug it to a breakpoint.
-- [ ] MSSQL extension: connect with profile `crm-dev` (enter the SA password when prompted) and run `SELECT @@VERSION`.
-- [ ] `make dev`: edit a Vue component and see HMR in the browser (C# hot reload was checked automatically, above).
+- [x] Run and debug the host (`Host (.NET)` or `Full stack`), and hit a breakpoint in `Program.cs` (for example, the health lambda).
+- [x] Test Explorer (C# Dev Kit): run `GetHealth_Anonymous_Returns200WithStatusOk` and debug it to a breakpoint.
+- [x] Test Explorer (Vitest): run `App › shows the health status returned by the API` and debug it to a breakpoint.
+- [x] MSSQL extension: connect with profile `crm-dev` (enter the SA password when prompted) and run `SELECT @@VERSION`.
+- [x] `make dev`: edit a Vue component and see HMR in the browser (C# hot reload was checked automatically, above).
+
+Finding: Vitest Explorer's activation event is `workspaceContains:**/*{vite,vitest}*.config*`, which VS Code checks only when a window opens. This window predated `src/web/vite.config.ts` (S0-5), so the extension never activated (it had no log folder) until **Developer: Reload Window**. Fresh clones are not affected.

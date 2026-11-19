@@ -114,7 +114,7 @@ Done when: `make build`, `make run`, `make publish` demonstrate the demo; pitfal
 
 Evidence: [docs/evidence/s00/S0-7-spa-hosting.md](../evidence/s00/S0-7-spa-hosting.md). `IncludeFrontendInPublish` not needed (SDK re-globs `wwwroot` at publish); static-asset manifest pitfall confirmed.
 
-### S0-8 Dev loop and VS Code (E46)
+### ✅ S0-8 Dev loop and VS Code (E46)
 
 Tests first: `scripts/checks/vscode-config.sh` validates JSON, that every `launch.json` `preLaunchTask` exists in `tasks.json`, and that tasks call `make`.
 
@@ -122,7 +122,7 @@ Implement: `.vscode` files, `make dev`, compound launch, Vite proxy, MSSQL exten
 
 Done when: demo step 5 performed and noted in the sprint log.
 
-In progress: checks, `make dev`, proxy and debug configurations done; demo step 5 pending, see the checklist in [docs/evidence/s00/S0-8-dev-loop.md](../evidence/s00/S0-8-dev-loop.md).
+Evidence: [docs/evidence/s00/S0-8-dev-loop.md](../evidence/s00/S0-8-dev-loop.md). Demo step 5 was performed on 2026-11-19 (see the sprint log).
 
 ### S0-9 Test harness (E46)
 
@@ -174,6 +174,10 @@ We are starting Sprint 0 in an empty repository. Check the entry criteria, then 
 (I expect S0-1 → S0-2 → S0-3 → S0-4 → S0-5 → S0-7 → S0-6 → S0-8 → S0-9 → S0-10). Query the NuGet and npm feeds
 for current stable versions rather than guessing. Do not write code until I confirm the order.
 ```
+
+## Sprint log
+
+- **2026-11-19, demo step 5 (S0-8), performed by the developer in VS Code; all parts passed.** Vue HMR under `make dev` (heading edit appeared in the browser without a reload). xUnit test debugged from Test Explorer (C# Dev Kit 3.40, Microsoft.Testing.Platform detected from `global.json`) and stopped at a breakpoint. Vitest test debugged from Test Explorer (Vitest Explorer 1.52) and stopped at a breakpoint in `health-store.ts`. MSSQL extension connected with profile `crm-dev` and ran `SELECT @@VERSION`. The host was debugged with `Full stack` and stopped at the health endpoint breakpoint. One finding: Vitest Explorer only activates if a Vite/Vitest config exists when the window opens, so a window opened before S0-5 needed **Developer: Reload Window**. Fresh clones are not affected.
 
 ## Retrospective
 
