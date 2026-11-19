@@ -12,7 +12,7 @@ public sealed class LayeringTests
     [Fact]
     public void ProductionAssemblies_AreDiscovered()
     {
-        CrmAssemblies.All.Select(a => a.GetName().Name).ShouldBe(["Crm.Host", "Crm.Migrator", "Crm.Platform"], ignoreOrder: true);
+        CrmAssemblies.All.Select(a => a.GetName().Name).ShouldBe(["Crm.Host", "Crm.Mediator", "Crm.Migrator", "Crm.SharedKernel"], ignoreOrder: true);
     }
 
     [Fact]

@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Crm.Platform.Messaging;
-using Crm.Platform.Modules;
+using Crm.Mediator;
+using Crm.SharedKernel.Modules;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

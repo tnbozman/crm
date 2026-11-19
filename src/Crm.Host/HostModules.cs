@@ -1,4 +1,4 @@
-using Crm.Platform.Modules;
+using Crm.SharedKernel.Modules;
 
 namespace Crm.Host;
 

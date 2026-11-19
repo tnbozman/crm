@@ -2,7 +2,7 @@ using System.Reflection;
 
 namespace Crm.Architecture.Tests;
 
-/// <summary>Every production Crm.* assembly copied next to the tests (test projects and Crm.Platform.Testing excluded).</summary>
+/// <summary>Every production Crm.* assembly copied next to the tests (test projects and Crm.Testing excluded).</summary>
 internal static class CrmAssemblies
 {
     public static IReadOnlyList<Assembly> All { get; } = Load();
@@ -12,7 +12,7 @@ internal static class CrmAssemblies
             .Select(Path.GetFileNameWithoutExtension)
             .Where(name => name is not null
                 && !name.EndsWith(".Tests", StringComparison.Ordinal)
-                && name != "Crm.Platform.Testing")
+                && name != "Crm.Testing")
             .Select(name => Assembly.Load(name!))
             .OrderBy(a => a.GetName().Name, StringComparer.Ordinal)
             .ToList();

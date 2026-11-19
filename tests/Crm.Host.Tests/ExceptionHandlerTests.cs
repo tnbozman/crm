@@ -1,8 +1,8 @@
 using System.Net;
 using System.Text.Json;
-using Crm.Platform.Errors;
-using Crm.Platform.Testing.Builders;
-using Crm.Platform.Testing.Logging;
+using Crm.SharedKernel.Errors;
+using Crm.Testing.Builders;
+using Crm.Testing.Logging;
 using Microsoft.Extensions.Logging;
 using Shouldly;
 using Xunit;

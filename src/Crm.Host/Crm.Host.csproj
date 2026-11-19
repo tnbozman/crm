@@ -16,7 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Crm.Platform\Crm.Platform.csproj" />
+    <ProjectReference Include="..\Crm.SharedKernel\Crm.SharedKernel.csproj" />
+    <ProjectReference Include="..\Crm.Mediator\Crm.Mediator.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -22,7 +22,7 @@ internal static partial class LayeringRules
             .GetResult());
 
     /// <summary>
-    /// Controllers take service interfaces (their module's Services, or Crm.Platform such as ICurrentUser) in their
+    /// Controllers take service interfaces (their module's Services, or Crm.SharedKernel such as ICurrentUser) in their
     /// constructors, and DTOs or framework types (Guid, CancellationToken, ...) as action parameters.
     /// </summary>
     public static IReadOnlyList<string> ControllerDependenciesOtherThanServiceInterfacesAndDtos(IReadOnlyList<Assembly> assemblies)
@@ -35,7 +35,7 @@ internal static partial class LayeringRules
             .SelectMany(c => c.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                 .SelectMany(ctor => ctor.GetParameters())
                 .Select(p => p.ParameterType)
-                .Where(t => !(t.IsInterface && (InNamespace(t, ".Services") || t.Assembly.GetName().Name == "Crm.Platform")))
+                .Where(t => !(t.IsInterface && (InNamespace(t, ".Services") || t.Assembly.GetName().Name == "Crm.SharedKernel")))
                 .Select(t => $"{c.FullName} depends on {t.FullName}"));
 
         var actionProblems = controllers
@@ -97,7 +97,7 @@ internal static partial class LayeringRules
             .That().ResideInNamespaceEndingWith(".Services")
             .Or().ResideInNamespaceEndingWith(".Controllers")
             .Or().ResideInNamespaceEndingWith(".Handlers")
-            .ShouldNot().HaveDependencyOn("Crm.Platform.Messaging.IEventPublisher")
+            .ShouldNot().HaveDependencyOn("Crm.Mediator.IEventPublisher")
             .GetResult());
 
     public static IReadOnlyList<string> DtosReferencingModels(IReadOnlyList<Assembly> assemblies)

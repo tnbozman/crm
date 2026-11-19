@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.Json;
-using Crm.Platform.Security;
-using Crm.Platform.Testing.Builders;
+using Crm.SharedKernel.Security;
+using Crm.Testing.Builders;
 using Shouldly;
 using Xunit;
 

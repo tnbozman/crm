@@ -1,5 +1,5 @@
 # Development-only SQL Server password, defined once: the db service uses it as the SA password and the app
-# container receives it as CRM_SQL_PASSWORD (make doctor, post-create, Crm.Platform.Testing.SqlFixture).
+# container receives it as CRM_SQL_PASSWORD (make doctor, post-create, Crm.Testing.SqlFixture).
 # Never used outside the devcontainer; Azure uses managed identity (CLAUDE.md security rules).
 x-dev-sql-password: &dev-sql-password "Dev_Only_Passw0rd!"
 

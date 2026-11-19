@@ -1,5 +1,5 @@
 using System.Reflection;
-using Crm.Platform.Modules;
+using Crm.SharedKernel.Modules;
 using Fixture.Sample;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

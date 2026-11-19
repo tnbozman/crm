@@ -1,4 +1,4 @@
-using Crm.Platform.Messaging;
+using Crm.Mediator;
 using Fixture.Rogue.Contracts;
 
 namespace Fixture.Rogue.Services;

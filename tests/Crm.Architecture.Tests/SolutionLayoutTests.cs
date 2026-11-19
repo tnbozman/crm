@@ -17,7 +17,7 @@ public sealed class SolutionLayoutTests
             .Select(p => Path.GetFileNameWithoutExtension((string)p.Attribute("Path")!))
             .ToList();
 
-        string[] required = ["Crm.Host", "Crm.Platform", "Crm.Platform.Testing", "Crm.Migrator"];
+        string[] required = ["Crm.Host", "Crm.SharedKernel", "Crm.Mediator", "Crm.Testing", "Crm.Migrator"];
         required.ShouldBeSubsetOf(projectNames);
     }
 }

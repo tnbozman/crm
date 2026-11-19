@@ -17,7 +17,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Crm.Host\Crm.Host.csproj" />
     <ProjectReference Include="..\..\src\Crm.Migrator\Crm.Migrator.csproj" />
-    <ProjectReference Include="..\..\src\Crm.Platform\Crm.Platform.csproj" />
+    <ProjectReference Include="..\..\src\Crm.SharedKernel\Crm.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\src\Crm.Mediator\Crm.Mediator.csproj" />
   </ItemGroup>
 
   <!-- Test-only modules the module rules are proven against (tests/Fixtures/README.md). -->

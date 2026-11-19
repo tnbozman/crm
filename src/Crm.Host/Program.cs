@@ -1,9 +1,9 @@
 using Crm.Host;
 using Crm.Host.Security;
-using Crm.Platform.Errors;
-using Crm.Platform.Messaging;
-using Crm.Platform.Modules;
-using Crm.Platform.Security;
+using Crm.SharedKernel.Errors;
+using Crm.Mediator;
+using Crm.SharedKernel.Modules;
+using Crm.SharedKernel.Security;
 using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,8 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddCrmErrorHandling();
 builder.Services.AddOpenApi();
-builder.Services.AddMediator();
-builder.Services.AddModules(new ModuleRegistry(HostModules.All), builder.Configuration);
+var modules = new ModuleRegistry(HostModules.All);
+builder.Services.AddModules(modules, builder.Configuration);
+builder.Services.AddMediator(modules);
 
 builder.Services
     .AddAuthentication(NoSignInAuthenticationHandler.SchemeName)

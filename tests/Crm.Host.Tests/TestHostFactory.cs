@@ -1,5 +1,5 @@
-using Crm.Platform.Testing;
-using Crm.Platform.Testing.Builders;
+using Crm.Testing;
+using Crm.Testing.Builders;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;

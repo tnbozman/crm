@@ -13,7 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\src\Crm.Platform\Crm.Platform.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\Crm.SharedKernel\Crm.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\Crm.Mediator\Crm.Mediator.csproj" />
     <ProjectReference Include="..\Fixture.Sample.Contracts\Fixture.Sample.Contracts.csproj" />
   </ItemGroup>
 

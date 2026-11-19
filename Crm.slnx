@@ -2,8 +2,9 @@
   <Folder Name="/src/">
     <Project Path="src/Crm.Host/Crm.Host.csproj" />
     <Project Path="src/Crm.Migrator/Crm.Migrator.csproj" />
-    <Project Path="src/Crm.Platform.Testing/Crm.Platform.Testing.csproj" />
-    <Project Path="src/Crm.Platform/Crm.Platform.csproj" />
+    <Project Path="src/Crm.Testing/Crm.Testing.csproj" />
+    <Project Path="src/Crm.Mediator/Crm.Mediator.csproj" />
+    <Project Path="src/Crm.SharedKernel/Crm.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/tests/fixtures/">
     <Project Path="tests/Fixtures/Modules/Rogue/Fixture.Rogue.Contracts/Fixture.Rogue.Contracts.csproj" />
@@ -14,7 +15,8 @@
   <Folder Name="/tests/">
     <Project Path="tests/Crm.Architecture.Tests/Crm.Architecture.Tests.csproj" />
     <Project Path="tests/Crm.Host.Tests/Crm.Host.Tests.csproj" />
-    <Project Path="tests/Crm.Platform.Tests/Crm.Platform.Tests.csproj" />
-    <Project Path="tests/Crm.Platform.Testing.Tests/Crm.Platform.Testing.Tests.csproj" />
+    <Project Path="tests/Crm.Mediator.Tests/Crm.Mediator.Tests.csproj" />
+    <Project Path="tests/Crm.SharedKernel.Tests/Crm.SharedKernel.Tests.csproj" />
+    <Project Path="tests/Crm.Testing.Tests/Crm.Testing.Tests.csproj" />
   </Folder>
 </Solution>

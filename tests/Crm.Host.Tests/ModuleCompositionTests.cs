@@ -1,5 +1,5 @@
-using Crm.Platform.Messaging;
-using Crm.Platform.Modules;
+using Crm.Mediator;
+using Crm.SharedKernel.Modules;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;

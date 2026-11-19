@@ -1,5 +1,5 @@
-using Crm.Platform.Errors;
-using Crm.Platform.Security;
+using Crm.SharedKernel.Errors;
+using Crm.SharedKernel.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

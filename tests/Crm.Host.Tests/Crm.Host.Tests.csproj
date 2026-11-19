@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Crm.Host\Crm.Host.csproj" />
-    <ProjectReference Include="..\..\src\Crm.Platform.Testing\Crm.Platform.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Crm.Testing\Crm.Testing.csproj" />
   </ItemGroup>
 
 </Project>

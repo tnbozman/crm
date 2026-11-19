@@ -1,6 +1,6 @@
 using System.Reflection;
 using Crm.Host;
-using Crm.Platform.Modules;
+using Crm.SharedKernel.Modules;
 
 namespace Crm.Architecture.Tests;
 

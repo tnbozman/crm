@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\src\Crm.Platform\Crm.Platform.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\Crm.Mediator\Crm.Mediator.csproj" />
   </ItemGroup>
 
 </Project>

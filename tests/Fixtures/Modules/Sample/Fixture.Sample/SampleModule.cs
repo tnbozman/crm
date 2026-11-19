@@ -1,6 +1,6 @@
 using System.Reflection;
-using Crm.Platform.Messaging;
-using Crm.Platform.Modules;
+using Crm.Mediator;
+using Crm.SharedKernel.Modules;
 using Fixture.Sample.Handlers;
 using Fixture.Sample.Services;
 using Microsoft.Extensions.Configuration;
