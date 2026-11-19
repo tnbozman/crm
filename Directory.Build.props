@@ -1,5 +1,10 @@
 <Project>
 
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
   <!-- Quality gates for every project (docs/environment.md §6). Asserted by Crm.Architecture.Tests. -->
   <PropertyGroup>
     <Nullable>enable</Nullable>
