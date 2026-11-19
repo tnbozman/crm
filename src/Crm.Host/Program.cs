@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddProblemDetails();
+builder.Services.AddOpenApi();
 
 builder.Services
     .AddAuthentication(NoSignInAuthenticationHandler.SchemeName)
