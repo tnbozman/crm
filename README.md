@@ -11,8 +11,7 @@ A set of markdown files for building the CRM incrementally with Claude, test fir
 | `docs/environment.md` | Devcontainer, Makefile, frontend-in-dotnet-build, VS Code configuration (specification for Sprint 0) |
 | `docs/compliance-matrix.md` | Essential Eight ML3 and NIST 800-171 controls mapped to sprints and stories |
 | `docs/sprints/00-sprint-plan.md` | All 31 sprints, dates, releases and epic coverage |
-| `docs/sprints/s00-…` to `s03-…` | R0 Foundations, in full detail |
-| `docs/sprints/r1` to `r6` | Later releases; sprint detail grows as you approach each one |
+| `docs/sprints/s00-…` to `s30-…` | One file per sprint (31 in total), each with goal, demo, entry criteria, stories with tests-first lists, evidence and a kickoff prompt |
 
 ## How to work
 
@@ -20,7 +19,7 @@ A set of markdown files for building the CRM incrementally with Claude, test fir
 2. Pick the next unticked story in the current sprint file. Paste the **story prompt** below.
 3. Let Claude write the failing test, run it, make it pass, refactor, commit. Review each commit.
 4. When all stories are ticked, run the **sprint review prompt**, then the sprint's *Demo* script yourself.
-5. Before starting a later sprint, run the **refine prompt** so the sprint file gets the same detail as S0 to S3.
+5. Before starting each sprint, run the **refresh prompt** so the file is adjusted to what the code now looks like.
 
 Keep one story per Claude session or per conversation segment. Small, reviewed commits beat large generated changes.
 
@@ -52,18 +51,17 @@ List: stories not ticked, Done-when items not evidenced, tests that are skipped 
 security rule from CLAUDE.md that was bent, and any follow-ups. Run make verify and report the result.
 ```
 
-**Refine prompt (for later sprints)**
+**Refresh prompt (before each sprint)**
 
 ```
-Read CLAUDE.md, docs/architecture.md and the section for sprint <N> in docs/sprints/<file>.md.
-Rewrite that section in the same format as docs/sprints/s01-kernel-and-access.md: goal, demo, entry criteria,
-stories with tests-first lists, implementation notes, Done-when lists, compliance evidence.
-Use what the code in the repo now looks like. Ask me at most three questions.
+Read CLAUDE.md, docs/architecture.md and docs/sprints/<file>.md.
+Compare the stories with the code and ADRs as they now exist. Propose edits to the sprint file only where
+reality has changed (renamed types, decisions made, stories already done, new risks). Show me the diff; do not implement.
 ```
 
 ## Assumptions and flags
 
-- **OpenVue** is treated as the PrimeVue fork you named; I could not verify its package name or whether its unstyled mode works with Tailwind, so Sprint 0 has a time-boxed spike (ADR-001) with the in-house PrimeVue fork as fallback.
+- **OpenVue** was confirmed in the S0-6 spike: `openvue` 1.1.1, MIT, a fork of MIT PrimeVue 4, with unstyled mode working with Tailwind pass-through. See `docs/adr/001-ui-library.md` for risks and the in-house PrimeVue fork fallback.
 - **ASP.NET Core Identity** is used in external-login-only mode so it does not conflict with the "Entra ID only, no local accounts" compliance requirement. A test enforces it (S1).
 - **Claude and OpenAI APIs** are supported behind `IChatClient`. For Essential Eight and 800-171 purposes the production default is Azure OpenAI in an Australian region; direct provider APIs are development-only with synthetic data until you approve them (ADR-008).
 - **pnpm**, **xUnit v3**, SQL `LIKE` search for the MVP and the `Crm.Migrator` approach to migrations are defaults you can change through ADRs.

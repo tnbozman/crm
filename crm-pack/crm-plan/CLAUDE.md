@@ -1,0 +1,117 @@
+# CLAUDE.md — CRM standing instructions
+
+Read this file first in every session. It overrides default habits. The sprint files in `docs/sprints/` say *what* to build; this file says *how*.
+
+## What we are building
+
+An internal-only CRM for a defence consultancy that also builds products. It must meet **NIST SP 800-171** (map to Rev 2 now, track Rev 3) and **Essential Eight Maturity Level 3**. No broad-market features. Authentication is Entra ID only; no local passwords. See `docs/architecture.md` for the design and `docs/compliance-matrix.md` for control mapping.
+
+## Stack (do not substitute without an ADR in `docs/adr/`)
+
+- Backend: .NET 10, ASP.NET Core, ASP.NET Core Identity (external login only), EF Core code-first with migrations, Microsoft.Extensions.AI and Microsoft Agent Framework (Claude and OpenAI providers).
+- Database: SQL Server (devcontainer: `db` service; production: Azure SQL).
+- Frontend: Vue 3 + TypeScript + Vite, Pinia, Vue Router, OpenVue (PrimeVue fork, unstyled mode) + Tailwind CSS.
+- Tooling: `make` is the only interface; devcontainer; VS Code.
+- The .NET build builds the frontend into `src/Crm.Host/wwwroot`; the backend serves it. Never add a second server for the SPA in production.
+
+## Commands (always use make)
+
+```
+make help          list targets
+make build         backend + frontend
+make test          all tests (backend, architecture, frontend)
+make test-unit     fast tests only (no database)
+make test-int      tests needing SQL Server
+make test-web      Vitest
+make lint          dotnet format check, ESLint, Prettier check, vue-tsc
+make format        apply formatting
+make dev           backend watch + Vite dev server
+make db-reset      drop and recreate the dev database, run all migrations
+make migration-add module=<Module> name=<Name>
+make module-new name=<Module>
+make verify        what CI runs: lint + build + test + api-client drift check
+```
+
+If a target you need is missing, add it to the `Makefile` first (with a test or a check where sensible), then use it.
+
+## Test-driven development — non-negotiable
+
+1. **Red**: write one failing test that describes the next behaviour. Run it. Show that it fails *for the right reason*.
+2. **Green**: write the least production code that passes. Run the test.
+3. **Refactor**: clean up with all tests green. Run `make test-unit` at least.
+4. Commit after each green step (small commits, imperative messages).
+
+Rules:
+
+- Never write production code without a failing test that requires it. Never edit a test to make it pass unless the requirement changed (say so explicitly).
+- One behaviour per test. Name tests `Method_Scenario_ExpectedResult` (C#) or `it('does X when Y')` (TS).
+- Do not mock the database. Persistence and API tests use real SQL Server through the fixtures in `Crm.Platform.Testing`. Mock only true external boundaries (Graph, finance system, AI providers).
+- Test pyramid per module: model and mapper unit tests (no I/O) → service tests (real SQL, own schema) → controller tests through `WebApplicationFactory` with fake auth → a few Playwright journeys. Mock a service only when testing a controller's HTTP behaviour in isolation is clearer; prefer end-to-end HTTP tests.
+- Every module has a migrations test: migrations apply to an empty database, and `HasPendingModelChanges()` is false.
+- Every permission rule has a negative test (the user who must not see or do it).
+- Every story ends with the *Done when* list in its sprint file satisfied and `make verify` green.
+- Bug fixes start with a failing test that reproduces the bug.
+
+## Architecture rules (enforced by `Crm.Architecture.Tests`)
+
+- Modular monolith: one deployable, one database, **one schema and one DbContext per module**.
+- A module is two projects: `Crm.<Module>.Contracts` (public: interfaces, DTOs, integration events) and `Crm.<Module>` (internal: domain, application, infrastructure, endpoints). Other modules may reference only `Contracts`.
+- No cross-schema foreign keys, joins or raw SQL against another module's tables. Refer to other modules' records by ID only.
+- Synchronous calls through Contracts interfaces. Asynchronous changes through integration events and the transactional outbox. No distributed transactions.
+- Reporting and search read projections built from events.
+- The runtime identity never runs migrations. `Crm.Migrator` applies them with the deployment identity.
+- Each module registers itself through `IModule` (services, controllers assembly, DbContext, migrations, AI tools and skills).
+
+## Layering rules (enforced by architecture tests)
+
+- **Controller → Service → DbContext/Models.** Controllers accept and return DTOs only; they never reference `DbContext` or Models and hold no business logic.
+- **Services** hold business rules and transactions, are registered by interface, never reference `HttpContext` or ASP.NET MVC types, and never return Models to controllers (they return DTOs or Contracts DTOs).
+- **Models** (EF entities) are `internal` to the module, enforce invariants through methods with private setters, and are never serialised or exposed.
+- **DTOs** are records in `Dtos/`; request DTOs are validated at the boundary; response DTOs never contain masked fields.
+- **Mapping** is explicit code in `Mapping/`; no reflection-based mapper unless an ADR approves one.
+- **No generic repository or unit-of-work wrapper.** Use the module `DbContext` in services.
+- Errors are thrown as typed exceptions from services and converted to problem details by the platform filter; controllers have no try/catch.
+- Controllers: `[ApiController]`, attribute routes `api/v1/<module>/<resource>`, `[Authorize(Policy=...)]`, `CancellationToken`, `[ProducesResponseType]`.
+- One controller per resource, one service per aggregate or use-case cluster; split a service that grows past ~300 lines.
+- Frontend feature folders mirror modules: `src/web/src/features/<module>/`.
+
+## Security rules
+
+- Entra ID is the only way to sign in. No password endpoints, no password hashes, no registration UI. A test proves it.
+- Development login exists only when `Environment=Development` and `Auth:DevLogin=true`. Startup validation fails in any other environment.
+- No secrets in code, config files, tests or logs. Use user-secrets locally, managed identity and Key Vault in Azure. Connection strings contain no passwords in Azure.
+- Every endpoint requires authorisation by default (fallback policy). Opening an endpoint needs a named policy and a test.
+- Validate all input at the boundary. Return RFC 9457 problem details. Never leak stack traces.
+- Log structured events; never log tokens, personal data beyond IDs, or prompt contents outside the audit pipeline.
+- The CRM holds commercial data only. Never put classified or CUI test data in the repo. Use synthetic data (`Bogus`).
+- Audit every create, update, delete and permission-relevant read through the Audit module. The runtime identity can only insert audit rows.
+- Dependencies: pin in `Directory.Packages.props`; do not guess versions — query the feed (`dotnet package search`, `pnpm view`) and use the latest stable. Critical vulnerabilities are fixed within 48 hours.
+- AI: tools are typed C# functions that call module Contracts under the **signed-in user's identity**; writes need explicit user approval; no free SQL; script execution in skills is off; skills are code reviewed like any other change.
+
+## Frontend rules
+
+- TypeScript strict. Components use `<script setup lang="ts">`.
+- API types come from the generated client (`make api-client`); never hand-write API types. CI fails if the generated client is stale.
+- UI uses OpenVue components in unstyled mode with Tailwind passthrough styling; shared wrappers live in `src/web/src/ui/`. No ad-hoc CSS files.
+- Test with Vitest + Testing Library + MSW. Accessibility checks with axe in component or e2e tests for each new screen.
+- Prettier and ESLint run on save and in `make lint`.
+
+## Working style for Claude
+
+- Work on one story at a time from the current sprint file. State the story ID, then write the first failing test.
+- Keep changes small. If a story needs more than ~400 changed lines, split it and say so.
+- Do not refactor unrelated code. Do not add features not in the story.
+- When requirements are unclear, ask one question; otherwise choose the simplest option and record it in `docs/adr/` if it is architectural.
+- After finishing a story: run `make verify`, tick the story in the sprint file, add evidence notes (see *Compliance evidence* in the sprint file), summarise in two sentences.
+- Never disable a test, lint rule or architecture test to get green. If one is wrong, fix it and explain.
+- Never run destructive commands against anything but the devcontainer database.
+
+## Definition of done (every story)
+
+- [ ] Tests written first; all pass; no skipped tests added
+- [ ] `make verify` green
+- [ ] Permissions covered by positive and negative tests
+- [ ] Audit events emitted where data changes
+- [ ] OpenAPI and generated client updated
+- [ ] Docs, sprint checklist and ADRs updated
+- [ ] Evidence recorded for compliance-relevant stories

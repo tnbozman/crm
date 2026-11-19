@@ -29,9 +29,10 @@ Tests first (`Crm.Architecture.Tests`):
 - `Contracts_Assemblies_ContainOnlyInterfacesRecordsEventsAndConstants`.
 - `EachModule_HasOneDbContext_WithDefaultSchemaEqualToModuleSchema` (scans compiled model).
 - `Module_Types_AreInternalUnlessInContracts`.
+- Layering: `Controllers_DoNotReference_DbContextOrModels`, `Controllers_OnlyDependOnServiceInterfacesAndDtos`, `Services_DoNotReference_HttpContextOrMvcTypes`, `Models_AreInternalAndNotUsedInDtosOrControllerSignatures`, `Dtos_DoNotReference_Models`, `Controllers_HaveNoTryCatch` (IL or source scan), `ModuleFolders_Follow_ControllersServicesDtosModelsPersistence`.
 - `Host_ModulesList_MatchesModuleProjects`.
 
-Implement: `IModule`, `ModuleRegistry`, host composition, test helpers to load compiled models.
+Implement: `IModule` (with `ControllersAssembly`), `ModuleRegistry`, host composition with `AddApplicationPart`, test helpers to load compiled models.
 
 Done when: tests fail before any module exists, pass with the Access module and the sample module.
 
@@ -39,7 +40,7 @@ Done when: tests fail before any module exists, pass with the Access module and 
 
 Tests first: `scripts/checks/new-module.sh` runs `make module-new name=Zzz` in a temp copy, then `dotnet build` and `make test-arch` succeed; the generated module has Contracts, implementation, test project, DbContext, initial migration, endpoints stub, `Skills/` folder and web feature folder.
 
-Implement: `scripts/new-module.sh` with templates under `scripts/templates/module/`; adds projects to the solution, host module list and Migrator.
+Implement: `scripts/new-module.sh` with templates (Controllers, Services, Dtos, Models, Persistence, Mapping, Validation, Events folders each with one example class and tests) under `scripts/templates/module/`; adds projects to the solution, host module list and Migrator.
 
 Done when: the scaffolder is used to create Access in S1-5 (dog-food).
 
@@ -78,7 +79,7 @@ Tests first:
 - `IdentityOptions_AllowNoPasswordSignIn` and `Schema_HasNoUsableCredentialColumns` (PasswordHash always null across the table after any test run).
 - Migrations: `AccessMigrations_ApplyToEmptyDatabase` and `NoPendingModelChanges`.
 
-Implement: `AccessDbContext : IdentityDbContext` in schema `access`; `SignInManager` external login only; Microsoft.Identity.Web OIDC registration (config-driven, validated at startup); cookie session; `/api/v1/access/me`; user disable/enable by admin (stub UI later); tenant ID check (only your tenant; reject guests unless configured).
+Implement: `User` model and `AccessDbContext : IdentityDbContext`, `UsersController`, `IUserService`, DTOs and mappers;  in schema `access`; `SignInManager` external login only; Microsoft.Identity.Web OIDC registration (config-driven, validated at startup); cookie session; `/api/v1/access/me`; user disable/enable by admin (stub UI later); tenant ID check (only your tenant; reject guests unless configured).
 
 Done when: tests green; ADR-004 updated with what Identity features are intentionally unused.
 

@@ -124,6 +124,8 @@ volumes:
   sqldata:
 ```
 
+> **Changed in S0-10 (repository made public):** the `db` service publishes **no ports**. The development password is public, so SQL Server is reachable only inside the compose network (`db`) and through VS Code forwarding (`"db:1433"`, localhost-only on the developer's machine). The password is defined once with a YAML anchor and passed to the app container as `CRM_SQL_PASSWORD` (S0-9). `scripts/checks/devcontainer-config.sh` (in `make lint`) enforces this.
+
 Notes: the `workspaces/crm` path must match `workspaceFolder`; the SA password is for the local container only and never used in Azure; S11 adds a `mailpit` service (ports 1025, 8025). **verify**: the sqlcmd path in the health check for the chosen image.
 
 `.devcontainer/post-create.sh` must: `dotnet tool restore`, `corepack enable`, `pnpm install` in `src/web`, `make hooks`, wait for the database, run `make db-reset`, print `make help`. It must be idempotent.
@@ -132,7 +134,11 @@ Notes: the `workspaces/crm` path must match `workspaceFolder`; the SA password i
 
 Recipes use tab indentation. Names are fixed; internals can change.
 
-> **Note (S0-2, ADR-003):** `dotnet test` runs on Microsoft.Testing.Platform. The VSTest `--filter` and `--collect` arguments below must become `--filter-trait`/`--filter-not-trait` and an MTP coverage extension when S0-3 implements these targets.
+> **Implemented in S0-3. The repository `Makefile` is now the source of truth.** It differs from the sketch below in these ways:
+> - Tests run on Microsoft.Testing.Platform (ADR-003). Filters are `--filter-trait`/`--filter-not-trait`, `--ignore-exit-code 8` tolerates projects with no matching tests, and `coverage` uses `--coverage` plus reportgenerator.
+> - The `help` pattern allows digits (`[a-zA-Z0-9_-]`); otherwise `test-e2e` never appears.
+> - `format-check` has a recipe and `lint` depends on it. `lint` also runs `scripts/checks/make-targets.sh`.
+> - Work owned by later stories is stubbed with `$(call todo,<story>,<message>)`, which prints `TODO(<story>)` and exits 0. `make-targets.sh` rejects a stub without a story ID.
 
 ```make
 .DEFAULT_GOAL := help
@@ -287,6 +293,12 @@ app.MapModules();                     // /api/v1/*
 app.MapFallbackToFile("index.html");  // SPA routes
 ```
 
+> **Verified in S0-7 (2026-11-19, .NET SDK 10.0.404). The repository is now the source of truth.**
+> - **Static web assets: pitfall confirmed.** After a clean build, `staticwebassets.*.endpoints.json` lists no `wwwroot` files (`"Endpoints":[]`), because the frontend build creates them after evaluation. `MapStaticAssets` would serve nothing, so the host uses `UseDefaultFiles` and `UseStaticFiles`.
+> - **Publish: pitfall does not apply. `IncludeFrontendInPublish` is not used.** The SDK target `_IncludePrePublishGeneratedContent` (Microsoft.NET.Sdk.Publish) re-globs `wwwroot/**` at publish time, so a clean `make publish` already contains the SPA. `scripts/checks/publish-contains-spa.sh` (in `make verify`) proves it from a clean state, so if a future SDK changes this, verify fails.
+> - **Host wiring** adds `app.MapFallback("/api/{**path}", …)` before the SPA fallback. Without it, `MapFallbackToFile` returns `index.html` for unknown API routes. The SPA fallback is opened with `HostPolicies.Anonymous` (ADR-011).
+> - `scripts/checks/frontend-incremental.sh` (in `make verify`) proves that `BuildFrontend` is skipped when inputs are unchanged and reruns when an input changes.
+
 **Pitfall to test, not assume (verify in S0)**: files created during the build may not be in the static-web-asset manifest that `MapStaticAssets` uses, because item globs are evaluated before the target runs. Use `UseStaticFiles` (reads `wwwroot` from disk) and keep the tests below.
 
 Required tests (S0): after `make build`, `GET /` returns the SPA `index.html`; `GET /some/client/route` returns `index.html`; `GET /api/v1/unknown` returns 404 problem details (not HTML); after `make publish`, `artifacts/publish/wwwroot/index.html` exists.
@@ -333,6 +345,14 @@ Required tests (S0): after `make build`, `GET /` returns the SPA `index.html`; `
 - `Attach to Migrator` for migration debugging.
 
 `.vscode/tasks.json` — tasks that call make: `build`, `test`, `test-web`, `lint`, `format`, and a background `web dev` task with a problem matcher so the debugger waits for Vite.
+
+> **Implemented in S0-8. The `.vscode` files are now the source of truth**, checked by `scripts/checks/vscode-config.sh` in `make lint`. They differ from the sketch above in these ways:
+> - `Host (.NET)` uses `launchSettingsProfile: "https"` (https://localhost:5001, http://localhost:5000, Development). There is no inline `env`, so F5, `make run` and `make dev` listen on the same URLs.
+> - The `web dev` task runs `make dev-web` (Vite only). Every task runs exactly one `make` target.
+> - Vitest Explorer reads `vitest.rootConfig: "src/web/vite.config.ts"`. The `vitest.root` key is not a setting of Vitest Explorer 1.52 and was silently ignored.
+> - The Vite dev server uses port 5173 (`strictPort`) and proxies `/api` to `https://localhost:5001` with `secure: false`, because the development certificate is untrusted inside the container. The proxy target must be a URL of the `Host (.NET)` launch profile (check G).
+> - `make dev` passes `SkipFrontend=true` as an environment variable, because `dotnet watch` reads `-p` as `--project`, so the sketch in §3 cannot work. It uses `wait -n` so that the whole target stops if either process dies. `make check-dev` smoke-tests it.
+> - C# Dev Kit 3.40 needs no setting for Microsoft.Testing.Platform (ADR-003). It has no MTP option and detects MTP from `global.json`.
 
 Test running: C# Dev Kit Test Explorer runs and debugs xUnit tests; Vitest Explorer runs the frontend tests; Playwright extension runs e2e. Integration tests appear in Test Explorer and need the `db` service running (it is part of the devcontainer).
 

@@ -1,0 +1,2 @@
+/* Tailwind entry point. Styling lives in utility classes and OpenVue pass-through (S0-6), not in CSS files. */
+@import 'tailwindcss';

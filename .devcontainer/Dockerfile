@@ -15,6 +15,10 @@ RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
     && ln -sf /opt/mssql-tools18/bin/sqlcmd /usr/local/bin/sqlcmd \
     && rm -rf /var/lib/apt/lists/*
 
+# actionlint (pinned and checksum-verified) for make lint (S0-10)
+COPY scripts/tools/install-actionlint.sh /tmp/install-actionlint.sh
+RUN bash /tmp/install-actionlint.sh /usr/local/bin && rm /tmp/install-actionlint.sh
+
 # Warm the NuGet cache so the first restore is offline-fast.
 # Copy only the central package files; a warm-up project is added in S0-2 once
 # Directory.Packages.props is finalized and all package versions are known.

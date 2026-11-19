@@ -49,7 +49,7 @@ Done when: `dotnet build` clean with warnings-as-errors; package versions record
 
 Evidence: [docs/evidence/s00/S0-2-build-baseline.md](../evidence/s00/S0-2-build-baseline.md); ADR-003 (test runner), ADR-010 (package baseline).
 
-### S0-3 Makefile (E46)
+### ✅ S0-3 Makefile (E46)
 
 Tests first: `scripts/checks/make-targets.sh` asserts every target listed in `CLAUDE.md` appears in `make help`, and that `make verify` exits non-zero when a test is made to fail (temporary).
 
@@ -57,18 +57,22 @@ Implement: Makefile per `docs/environment.md` §3.
 
 Done when: every target in the spec runs or is explicitly stubbed with a clear message and a TODO story ID.
 
-### S0-4 Host with health endpoint (E46)
+Evidence: [docs/evidence/s00/S0-3-makefile.md](../evidence/s00/S0-3-makefile.md).
+
+### ✅ S0-4 Host with health endpoint (E46)
 
 Tests first (xUnit, `WebApplicationFactory`):
 - `GetHealth_Anonymous_Returns200WithStatusOk` (health is the only anonymous API).
 - `GetUnknownApiRoute_Returns404ProblemDetails`.
-- `GetAnyOtherApiRoute_WithoutAuth_Returns401` (fallback authorisation policy exists from day one; use a throwaway test endpoint registered only in the test host).
+- `GetAnyOtherApiRoute_WithoutAuth_Returns401` (fallback authorisation policy exists from day one; use a throwaway test controller registered only in the test host).
 
-Implement: minimal host, fallback authorisation policy, problem details, `/api/v1/health`, OpenAPI document generation.
+Implement: host with MVC controllers (`HealthController`), fallback authorisation policy, exception filter producing problem details, OpenAPI document generation. Establish the folder layout from `docs/architecture.md` §2a in the Host project as the reference.
 
 Done when: tests green; OpenAPI file emitted by `make api-client`.
 
-### S0-5 Vue 3 app and tooling (E46)
+Evidence: [docs/evidence/s00/S0-4-host-health.md](../evidence/s00/S0-4-host-health.md); ADR-011. Done against the original S0-4 text (minimal APIs, the same tests). The revised text above (MVC controllers, exception filter, §2a layout) is tracked as **S0-11**. Anonymous requests to unknown `/api` routes get 401 by design (ADR-011).
+
+### ✅ S0-5 Vue 3 app and tooling (E46)
 
 Tests first (Vitest + Testing Library + MSW):
 - `App shows the health status returned by the API`.
@@ -79,7 +83,9 @@ Implement: Vite + Vue 3 + TypeScript strict, Pinia, Vue Router, Tailwind CSS, ES
 
 Done when: `pnpm lint`, `format:check`, `typecheck`, `test --run`, `build` all pass; `make api-client-check` passes.
 
-### S0-6 OpenVue spike and UI foundation (E46, ADR-001)
+Evidence: [docs/evidence/s00/S0-5-vue-app.md](../evidence/s00/S0-5-vue-app.md); ADR-002 (pnpm and release-age policy); npm baseline in ADR-010.
+
+### ✅ S0-6 OpenVue spike and UI foundation (E46, ADR-001)
 
 Time-box: half a day for the spike, then implement.
 
@@ -91,7 +97,9 @@ Implement: confirm the OpenVue package name, version, licence and that unstyled 
 
 Done when: ADR-001 written with decision and evidence; wrappers tested.
 
-### S0-7 .NET build builds and serves the frontend (E46)
+Evidence: [docs/evidence/s00/S0-6-ui-foundation.md](../evidence/s00/S0-6-ui-foundation.md); decision in [ADR-001](../adr/001-ui-library.md).
+
+### ✅ S0-7 .NET build builds and serves the frontend (E46)
 
 Tests first (`Crm.Host.Tests`, category `Integration`):
 - `Get_Root_ReturnsSpaIndexHtml` after `dotnet build` (test fails if `wwwroot/index.html` is absent).
@@ -104,7 +112,9 @@ Implement: `BuildFrontend` and `IncludeFrontendInPublish` targets, Vite `outDir`
 
 Done when: `make build`, `make run`, `make publish` demonstrate the demo; pitfall in `docs/environment.md` §4 confirmed or corrected in the doc.
 
-### S0-8 Dev loop and VS Code (E46)
+Evidence: [docs/evidence/s00/S0-7-spa-hosting.md](../evidence/s00/S0-7-spa-hosting.md). `IncludeFrontendInPublish` not needed (SDK re-globs `wwwroot` at publish); static-asset manifest pitfall confirmed.
+
+### ✅ S0-8 Dev loop and VS Code (E46)
 
 Tests first: `scripts/checks/vscode-config.sh` validates JSON, that every `launch.json` `preLaunchTask` exists in `tasks.json`, and that tasks call `make`.
 
@@ -112,17 +122,21 @@ Implement: `.vscode` files, `make dev`, compound launch, Vite proxy, MSSQL exten
 
 Done when: demo step 5 performed and noted in the sprint log.
 
-### S0-9 Test harness (E46)
+Evidence: [docs/evidence/s00/S0-8-dev-loop.md](../evidence/s00/S0-8-dev-loop.md). Demo step 5 was performed on 2026-11-19 (see the sprint log).
+
+### ✅ S0-9 Test harness (E46)
 
 Tests first:
 - `SqlFixture_CreatesIsolatedDatabase_AndDropsIt` (two parallel test classes do not collide).
 - `Respawn_ResetsData_BetweenTests`.
 - `FakeAuth_UserWithRoles_IsReadByCurrentUser` (placeholder until S1 adds `ICurrentUser`; keep to the auth scheme).
-- Architecture test examples: "no project references `Microsoft.EntityFrameworkCore.*` except module projects and Migrator", "Host does not call `Migrate`" (string scan).
+- Architecture test examples (layering): `Controllers_DoNotReference_DbContextOrModels`, `Services_DoNotReference_HttpContextOrMvc`, `Models_AreInternal`, `Controllers_ReturnOnlyDtoTypes`; "no project references `Microsoft.EntityFrameworkCore.*` except module projects and Migrator", "Host does not call `Migrate`" (string scan).
 
 Implement: `Crm.Platform.Testing` with `SqlFixture`, `TestWebAppFactory`, `FakeAuthHandler`, `Builders` with Bogus; test categories `Integration`, `Architecture`, `AiSmoke`.
 
 Done when: `make test-int` runs against the compose database; documented in `docs/testing.md`.
+
+Evidence: [docs/evidence/s00/S0-9-test-harness.md](../evidence/s00/S0-9-test-harness.md); guide in [docs/testing.md](../testing.md). Split into 9a (SQL fixture, Respawn, credentials from the environment), 9b (fake auth, `TestWebAppFactory`, Bogus builders) and 9c (architecture tests) to stay near ~400 lines each. Database per test class instead of per assembly (see evidence). Containers created before this story need a rebuild for `CRM_SQL_PASSWORD`.
 
 ### S0-10 CI, hooks and supply chain (E4, E39)
 
@@ -131,6 +145,21 @@ Tests first: a workflow lint (`actionlint` in `make lint` when present) and a de
 Implement: `.github/workflows/ci.yml` running `make verify` with a SQL Server service; `dotnet list package --vulnerable --include-transitive` and `pnpm audit` gates; Dependabot (or Renovate) for NuGet, npm, Actions and the devcontainer; secret scanning and push protection; CodeQL; pinned action SHAs; SBOM generation (CycloneDX); `.githooks`.
 
 Done when: CI green on a PR; branch protection requires CI and one review; SBOM artifact produced.
+
+### ✅ S0-11 Host on MVC controllers (E46): follow-up to the revised S0-4
+
+S0-4 was built against its original text (minimal APIs). The revised pack moves the API to MVC controllers with the §2a layering. Do this **before S0-9**, whose layering architecture tests need controllers to exist.
+
+Tests first:
+- The existing host tests stay green unchanged: they are HTTP-level (health, fallback 401, unknown-route 404/401, Production 500 without stack trace, OpenAPI document, SPA hosting).
+- `HealthController_IsOnlyEndpointUsingAnonymousPolicy` (architecture test: the `Anonymous` policy appears only on `HealthController` and the SPA fallback).
+- `ServiceException_IsConvertedToProblemDetails_ByExceptionFilter` (a throwaway controller in the test host throws `NotFoundException`, which returns 404 problem details).
+
+Implement: `AddControllers` with `[ApiController]`, `HealthController` at `api/v1/health` with `[Authorize(Policy = HostPolicies.Anonymous)]`, the platform exception filter and typed exceptions, `Controllers/` and `Dtos/` folders in `Crm.Host` per §2a. Replace the `IApiEndpoints` test seam with a test-only controller added by `AddApplicationPart`. The OpenAPI document must still describe `/api/v1/health` (regenerate it and review the diff).
+
+Done when: all S0-4 and S0-7 tests green without edits; ADR-011 updated for controllers; `make verify` green.
+
+Evidence: [docs/evidence/s00/S0-11-controllers.md](../evidence/s00/S0-11-controllers.md); ADR-011 updated.
 
 ## Compliance evidence
 
@@ -149,6 +178,10 @@ We are starting Sprint 0 in an empty repository. Check the entry criteria, then 
 (I expect S0-1 → S0-2 → S0-3 → S0-4 → S0-5 → S0-7 → S0-6 → S0-8 → S0-9 → S0-10). Query the NuGet and npm feeds
 for current stable versions rather than guessing. Do not write code until I confirm the order.
 ```
+
+## Sprint log
+
+- **2026-11-19, demo step 5 (S0-8), performed by the developer in VS Code; all parts passed.** Vue HMR under `make dev` (heading edit appeared in the browser without a reload). xUnit test debugged from Test Explorer (C# Dev Kit 3.40, Microsoft.Testing.Platform detected from `global.json`) and stopped at a breakpoint. Vitest test debugged from Test Explorer (Vitest Explorer 1.52) and stopped at a breakpoint in `health-store.ts`. MSSQL extension connected with profile `crm-dev` and ran `SELECT @@VERSION`. The host was debugged with `Full stack` and stopped at the health endpoint breakpoint. One finding: Vitest Explorer only activates if a Vite/Vitest config exists when the window opens, so a window opened before S0-5 needed **Developer: Reload Window**. Fresh clones are not affected.
 
 ## Retrospective
 

@@ -9,7 +9,7 @@
   "[markdown]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
   "eslint.useFlatConfig": true,
   "eslint.workingDirectories": [{ "directory": "src/web" }],
-  "vitest.root": "src/web",
+  "vitest.rootConfig": "src/web/vite.config.ts",
   "tailwindCSS.experimental.classRegex": [["class:\\s*['\"`]([^'\"`]*)['\"`]"]],
   "files.exclude": { "**/bin": true, "**/obj": true },
   "mssql.connections": [
@@ -19,7 +19,9 @@
       "authenticationType": "SqlLogin",
       "user": "sa",
       "trustServerCertificate": true,
-      "savePassword": false
+      "savePassword": false,
+      "groupId": "ROOT",
+      "id": "4cd7f7c3-db84-4c35-8f84-e199b5673fe6"
     }
   ]
 }

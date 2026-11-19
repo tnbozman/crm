@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-# Runs full verification before each push. Added to in S0-10.
+# The full CI gate before each push (make hooks installs this). Needs SQL Server (CRM_SQL_*).
 set -euo pipefail
-# S0-10 adds: make verify
+make --no-print-directory verify

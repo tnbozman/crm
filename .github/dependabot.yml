@@ -1,0 +1,41 @@
+# Dependency updates (S0-10, E39). Every update arrives as a PR that must pass CI (make verify, audit, CodeQL).
+# cooldown keeps the same one-day release-age policy as pnpm (ADR-002).
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 1
+    groups:
+      aspnetcore:
+        patterns: ["Microsoft.AspNetCore.*", "Microsoft.Extensions.*"]
+      testing:
+        patterns: ["xunit*", "Shouldly", "Bogus", "Respawn", "NetArchTest.Rules", "Microsoft.Testing.*"]
+
+  - package-ecosystem: npm
+    directory: /src/web
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 1
+    groups:
+      vue:
+        patterns: ["vue", "vue-router", "pinia", "@vue/*", "vue-tsc"]
+      lint-format:
+        patterns: ["eslint*", "@eslint/*", "typescript-eslint", "prettier*"]
+      test:
+        patterns: ["vitest", "@vitest/*", "@testing-library/*", "msw", "jsdom", "axe-core"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 1
+
+  - package-ecosystem: devcontainers
+    directory: /
+    schedule:
+      interval: weekly

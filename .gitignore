@@ -55,3 +55,4 @@ Thumbs.db
 
 # Azure Functions
 local.settings.json
+temp.txt
