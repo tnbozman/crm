@@ -4,11 +4,18 @@ import { apiFetch } from '@/api/client'
 
 export const useHealthStore = defineStore('health', () => {
   const status = ref('checking')
+  const failed = ref(false)
 
   async function load() {
-    const health = await apiFetch('/api/v1/health')
-    status.value = health.status
+    try {
+      const health = await apiFetch('/api/v1/health')
+      status.value = health.status
+      failed.value = false
+    } catch {
+      status.value = 'unavailable'
+      failed.value = true
+    }
   }
 
-  return { status, load }
+  return { status, failed, load }
 })

@@ -8,5 +8,6 @@ onMounted(() => health.load())
 </script>
 
 <template>
-  <p role="status">API status: {{ health.status }}</p>
+  <p v-if="health.failed" role="alert">API status: {{ health.status }}</p>
+  <p v-else role="status">API status: {{ health.status }}</p>
 </template>

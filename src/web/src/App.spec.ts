@@ -12,4 +12,16 @@ describe('App', () => {
 
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('API status: ok'))
   })
+
+  it('shows an error state when the API fails', async () => {
+    server.use(
+      http.get('/api/v1/health', () =>
+        HttpResponse.json({ title: 'Service Unavailable', status: 503 }, { status: 503 }),
+      ),
+    )
+
+    await renderApp()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('API status: unavailable')
+  })
 })
