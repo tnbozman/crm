@@ -1,11 +1,12 @@
 using Crm.Host;
 using Crm.Host.Security;
+using Crm.Platform.Errors;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options => options.Filters.Add<ProblemDetailsExceptionFilter>());
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 

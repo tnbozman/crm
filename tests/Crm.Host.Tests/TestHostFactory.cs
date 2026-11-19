@@ -21,7 +21,11 @@ public sealed class TestHostFactory : WebApplicationFactory<Program>
     public const string ExceptionDetail = "sensitive-internal-detail";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder) =>
-        builder.ConfigureTestServices(services => services.AddSingleton<IApiEndpoints, TestOnlyEndpoints>());
+        builder.ConfigureTestServices(services =>
+        {
+            services.AddSingleton<IApiEndpoints, TestOnlyEndpoints>();
+            services.AddControllers().AddApplicationPart(typeof(TestOnlyController).Assembly);
+        });
 
     /// <summary>A client whose requests are authenticated as a test user (replaced by FakeAuthHandler in S0-9).</summary>
     public HttpClient CreateSignedInClient(string environment = "Development") =>
