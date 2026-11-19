@@ -1,5 +1,9 @@
 using System.Net;
 using System.Text.Json;
+using Crm.Platform.Errors;
+using Crm.Platform.Testing.Builders;
+using Crm.Platform.Testing.Logging;
+using Microsoft.Extensions.Logging;
 using Shouldly;
 using Xunit;
 
@@ -54,5 +58,33 @@ public sealed class ExceptionHandlerTests(TestHostFactory factory) : IClassFixtu
 
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         response.Content.Headers.ContentType.ShouldNotBeNull().MediaType.ShouldBe("application/problem+json");
+    }
+
+    [Fact]
+    public async Task ExpectedException_IsNotLoggedAsAWarningOrError()
+    {
+        using var logs = new CapturingLoggerProvider();
+        using var client = factory.CreateClientFor(new TestUserBuilder().Build(), "Production", logs);
+
+        using var response = await client.GetAsync(new Uri(TestOnlyController.ForbiddenPath, UriKind.Relative), TestContext.Current.CancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        logs.Entries
+            .Where(e => e.Level >= LogLevel.Warning)
+            .Where(e => e.Category.StartsWith("Microsoft.AspNetCore.Diagnostics", StringComparison.Ordinal)
+                || e.Line.Contains(nameof(ForbiddenException), StringComparison.Ordinal))
+            .ShouldBeEmpty("a 4xx the caller caused is not a server fault");
+    }
+
+    [Fact]
+    public async Task UnexpectedException_IsLoggedAsAnError()
+    {
+        using var logs = new CapturingLoggerProvider();
+        using var client = factory.CreateClientFor(new TestUserBuilder().Build(), "Production", logs);
+
+        using var response = await client.GetAsync(new Uri(TestHostFactory.ThrowingPath, UriKind.Relative), TestContext.Current.CancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
+        logs.Entries.ShouldContain(e => e.Level == LogLevel.Error);
     }
 }
