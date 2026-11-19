@@ -144,7 +144,7 @@ Implement: `.github/workflows/ci.yml` running `make verify` with a SQL Server se
 
 Done when: CI green on a PR; branch protection requires CI and one review; SBOM artifact produced.
 
-### S0-11 Host on MVC controllers (E46): follow-up to the revised S0-4
+### ✅ S0-11 Host on MVC controllers (E46): follow-up to the revised S0-4
 
 S0-4 was built against its original text (minimal APIs). The revised pack moves the API to MVC controllers with the §2a layering. Do this **before S0-9**, whose layering architecture tests need controllers to exist.
 
@@ -156,6 +156,8 @@ Tests first:
 Implement: `AddControllers` with `[ApiController]`, `HealthController` at `api/v1/health` with `[Authorize(Policy = HostPolicies.Anonymous)]`, the platform exception filter and typed exceptions, `Controllers/` and `Dtos/` folders in `Crm.Host` per §2a. Replace the `IApiEndpoints` test seam with a test-only controller added by `AddApplicationPart`. The OpenAPI document must still describe `/api/v1/health` (regenerate it and review the diff).
 
 Done when: all S0-4 and S0-7 tests green without edits; ADR-011 updated for controllers; `make verify` green.
+
+Evidence: [docs/evidence/s00/S0-11-controllers.md](../evidence/s00/S0-11-controllers.md); ADR-011 updated.
 
 ## Compliance evidence
 
