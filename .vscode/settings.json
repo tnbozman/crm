@@ -19,7 +19,9 @@
       "authenticationType": "SqlLogin",
       "user": "sa",
       "trustServerCertificate": true,
-      "savePassword": false
+      "savePassword": false,
+      "groupId": "ROOT",
+      "id": "4cd7f7c3-db84-4c35-8f84-e199b5673fe6"
     }
   ]
 }
