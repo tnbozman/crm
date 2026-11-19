@@ -95,11 +95,13 @@ Evidence: [docs/evidence/s01/S1-3-mediator.md](../evidence/s01/S1-3-mediator.md)
 
 **Added scope (2026-11-19, at the developer's direction): global exception handler.** Typed exceptions were mapped only by an MVC filter, so the same exception thrown outside a controller action became a 500. Replaced by one `IExceptionHandler` (`CrmExceptionHandler`, `AddCrmErrorHandling`) covering every request; the filter is removed; expected 4xx are not logged as faults. Exception use across the code base reviewed; no further changes needed. Evidence: [docs/evidence/s01/S1-3-global-exception-handler.md](../evidence/s01/S1-3-global-exception-handler.md).
 
+**Added scope (2026-11-19, at the developer's direction): project structure (ADR-013).** `Crm.Platform` split into `Crm.SharedKernel` (common features, no endpoints or data stores) and `Crm.Mediator` (the mediator plus every cross-module message under `Crm.Mediator.Contracts.<Module>`); `Crm.Platform.Testing` renamed `Crm.Testing`. A module is one library that references only `Crm.SharedKernel` and `Crm.Mediator`; the host references every module. No per-module Contracts projects; `IModule.ContractsAssembly` removed; startup handler validation moved to `AddMediator(registry)`. Named `SharedKernel` because CA1716 rejects `Shared` (a VB keyword) in namespaces. Evidence: [docs/evidence/s01/S1-3-project-structure.md](../evidence/s01/S1-3-project-structure.md).
+
 ### S1-4 Module scaffolder (E46)
 
-Tests first: `scripts/checks/new-module.sh` runs `make module-new name=Zzz` in a temp copy, then `dotnet build` and `make test-arch` succeed; the generated module has Contracts, implementation, test project, DbContext, initial migration, endpoints stub, `Skills/` folder and web feature folder.
+Tests first: `scripts/checks/new-module.sh` runs `make module-new name=Zzz` in a temp copy, then `dotnet build` and `make test-arch` succeed; the generated module is one library `src/Modules/Crm.Zzz` (referencing only `Crm.SharedKernel` and `Crm.Mediator`) with a test project, DbContext, initial migration, endpoints stub, `Skills/` folder, a messages folder `src/Crm.Mediator/Contracts/Zzz/` and a web feature folder (ADR-013).
 
-Implement: `scripts/new-module.sh` with templates (Controllers, Services, Dtos, Models, Persistence, Mapping, Validation, Handlers folders each with one example class and tests; handler registration from S1-3; S1-5 adds the outbox, inbox and relay to Persistence) under `scripts/templates/module/`; adds projects to the solution, host module list and Migrator.
+Implement: `scripts/new-module.sh` with templates (Controllers, Services, Dtos, Models, Persistence, Mapping, Validation, Handlers folders each with one example class and tests; handler registration from S1-3; S1-5 adds the outbox, inbox and relay to Persistence) under `scripts/templates/module/`; adds the module to the solution, the host's project references and module list, and the Migrator.
 
 Done when: the scaffolder is used to create Access in S1-6 (dog-food).
 
@@ -107,7 +109,7 @@ Done when: the scaffolder is used to create Access in S1-6 (dog-food).
 
 Design: ADR-009. Each module owns this code, generated from the scaffolder templates (S1-4). Needs two scaffolded modules with migrations.
 
-Tests first (persistence, real SQL; written once as a conformance suite in `Crm.Platform.Testing` and run by each module's test project against its own `DbContext`):
+Tests first (persistence, real SQL; written once as a conformance suite in `Crm.Testing` and run by each module's test project against its own `DbContext`):
 - `Outbox_Message_IsWrittenInSameTransactionAsEntityChange` (roll back → no message).
 - `Relay_PublishesPendingMessages_ThroughMediator_AndMarksProcessed`.
 - `Relay_Retries_FailedHandler_WithBackoff_ThenDeadLetters`.
@@ -116,9 +118,9 @@ Tests first (persistence, real SQL; written once as a conformance suite in `Crm.
 - `Relay_ResumesAfterRestart_WithoutLosingMessages`.
 - `scripts/checks/module-outbox-drift.sh` (in `make verify`) fails on a planted change to one module's outbox code.
 
-Implement: in `scripts/templates/module/Persistence/`: outbox and inbox entities and configuration, `SaveChanges` hook, `IOutbox` (module-internal), inbox guard, hosted relay publishing through `IMediator`. The conformance suite in `Crm.Platform.Testing`. Regenerate the sample modules from the template.
+Implement: in `scripts/templates/module/Persistence/`: outbox and inbox entities and configuration, `SaveChanges` hook, `IOutbox` (module-internal), inbox guard, hosted relay publishing through `IMediator`. The conformance suite in `Crm.Testing`. Regenerate the sample modules from the template.
 
-Done when: two sample modules exchange a query and an event through the mediator in an API-level test, with neither referencing the other's implementation.
+Done when: two sample modules exchange a query and an event through the mediator in an API-level test, with neither referencing the other (ADR-013).
 
 ### S1-6 Access module with ASP.NET Core Identity, external login only (E2)
 

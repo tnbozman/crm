@@ -4,17 +4,19 @@ Companion to `CLAUDE.md`. Read before Sprint 0 and whenever a story touches modu
 
 ## 1. Shape
 
-One deployable (Azure App Service) and one Azure SQL database, built from modules. Each module owns its code, one EF Core `DbContext` and one SQL schema. The Vue 3 app is built by the .NET build into `Crm.Host/wwwroot` and served by the same host.
+One deployable (Azure App Service) and one Azure SQL database, built from modules (ADR-013). Each module is one class library that owns its code, its endpoints, one EF Core `DbContext` and one SQL schema; no module project references another. The Vue 3 app is built by the .NET build into `Crm.Host/wwwroot` and served by the same host.
 
 ```
 src/
-  Crm.Host/                  composition root, endpoints mapping, serves wwwroot
+  Crm.Host/                  web API, composition root: references every module, serves wwwroot
   Crm.Migrator/              console app; applies every module's migrations
-  Crm.Platform/              kernel (no EF Core): IModule, IMediator and pipeline, message envelope, ICurrentUser, auth, AI abstractions
-  Crm.Platform.Testing/      SQL fixture, fake auth, builders, mediator test double, outbox conformance suite
-  Modules/<Module>/
-    Crm.<Module>.Contracts/  public API of the module: query, command and event records, response DTOs, constants (no interfaces)
-    Crm.<Module>/            internal implementation, layered by folder:
+  Crm.SharedKernel/          common features, no endpoints or data stores: IModule and composition, ICurrentUser,
+                             roles and policies, typed errors and the global exception handler, AI abstractions
+  Crm.Mediator/              how modules talk (refs SharedKernel): IMediator, IEventPublisher, pipeline, envelope
+    Contracts/<Module>/      every cross-module message, namespace Crm.Mediator.Contracts.<Module>
+                             (query, command and event records, response DTOs, constants; no interfaces)
+  Crm.Testing/               SQL fixture, fake auth, builders, log capture, test module; outbox conformance suite (S1-5)
+  Modules/Crm.<Module>/      one class library per module (refs only SharedKernel and Mediator), layered by folder:
       Controllers/           ASP.NET Core controllers: HTTP only, thin
       Services/              business logic and transactions (interface + implementation)
       Dtos/                  request and response DTOs for this module's HTTP API
@@ -22,7 +24,7 @@ src/
       Persistence/           DbContext, IEntityTypeConfiguration classes, Migrations, outbox, inbox and relay
       Mapping/               explicit mappers between Models and DTOs
       Validation/            request validators
-      Handlers/              mediator handlers: this module's Contracts queries and commands, other modules' integration events
+      Handlers/              mediator handlers: queries and commands in Crm.Mediator.Contracts.<Module>, and integration events it subscribes to
       Skills/                AI skills and tools (R6)
   web/                       Vue 3 app (Vite)
 tests/
@@ -60,7 +62,7 @@ HTTP request → Controller → Service → DbContext (Models) → SQL Server
 | Layer | Responsibility | May reference | Must not |
 | --- | --- | --- | --- |
 | Controller | Routing, authorisation attributes, model binding, status codes, calling one service method, returning DTOs | Services (interfaces), Dtos, `ICurrentUser` | Touch `DbContext` or Models; contain business rules; catch exceptions to shape errors (the global exception handler does that) |
-| Service | Business rules, orchestration, transactions, writing integration events to the module's outbox, sending other modules' Contracts queries and commands through `IMediator` | `DbContext`, Models, Dtos, Mapping, `IMediator`, other modules' Contracts | Reference `HttpContext`, controllers or ASP.NET types; return Models to controllers; call `IMediator.Publish`; inject another module's services |
+| Service | Business rules, orchestration, transactions, writing integration events to the module's outbox, sending other modules' queries and commands (`Crm.Mediator.Contracts`) through `IMediator` | `DbContext`, Models, Dtos, Mapping, `IMediator`, `Crm.Mediator.Contracts` | Reference `HttpContext`, controllers or ASP.NET types; return Models to controllers; call `IMediator.Publish`; inject another module's services |
 | DTO | Shape of the HTTP contract: records with data annotations or validators, no behaviour | Nothing | Reference Models |
 | Model | EF Core entity: state plus invariants enforced through methods; private setters, no public parameterless constructor outside EF | Nothing outside the module | Be serialised or returned from any API; be used by other modules |
 | Mapper | Explicit static or injected mapping code (no reflection mapper by default) | Models, Dtos | Contain logic or queries |
@@ -68,9 +70,9 @@ HTTP request → Controller → Service → DbContext (Models) → SQL Server
 
 Rules:
 - No generic repository. Services use the module's `DbContext` directly; this keeps queries explicit and testable against real SQL.
-- Services expose an interface (`IOrganisationService`) used by controllers and handlers inside the module. Cross-module access is a Contracts message (`GetOrganisationSummary : IQuery<OrganisationSummary>`) sent through `IMediator` and handled in the owning module by a thin handler that delegates to its services (ADR-009). Contracts DTOs are distinct from API DTOs.
+- Services expose an interface (`IOrganisationService`) used by controllers and handlers inside the module. Cross-module access is a message in `Crm.Mediator.Contracts.<Owner>` (`GetOrganisationSummary : IQuery<OrganisationSummary>`) sent through `IMediator` and handled in the owning module by a thin handler that delegates to its services (ADR-009). Message response records are distinct from the module's internal API DTOs.
 - Queries project to DTOs (`Select`) rather than loading whole Models where the response is read-only.
-- Services throw typed exceptions from `Crm.Platform.Errors` (`NotFoundException` 404, `ForbiddenException` 403, `RequestValidationException` 400 with field errors; `ConflictException` 409 arrives with optimistic concurrency). One global `IExceptionHandler` (`CrmExceptionHandler`, registered by `AddCrmErrorHandling` and run by `UseExceptionHandler`) maps them to RFC 9457 problem details for every request: controllers, minimal endpoints and middleware alike. Their messages never reach the response, and they are not logged as faults. Any other exception is a bug: 500 with no detail, logged as an error. Controllers contain no try/catch.
+- Services throw typed exceptions from `Crm.SharedKernel.Errors` (`NotFoundException` 404, `ForbiddenException` 403, `RequestValidationException` 400 with field errors; `ConflictException` 409 arrives with optimistic concurrency). One global `IExceptionHandler` (`CrmExceptionHandler`, registered by `AddCrmErrorHandling` and run by `UseExceptionHandler`) maps them to RFC 9457 problem details for every request: controllers, minimal endpoints and middleware alike. Their messages never reach the response, and they are not logged as faults. Any other exception is a bug: 500 with no detail, logged as an error. Controllers contain no try/catch.
 - Controllers use `[ApiController]`, attribute routing (`[Route("api/v1/<module>/<resource>")]`), `[Authorize]` with named policies, `CancellationToken` parameters, `ActionResult<T>` or `[ProducesResponseType]` for OpenAPI accuracy.
 - Models carry `OwnerTeamId`/`BusinessUnitId` where access-controlled; query filters live in the DbContext.
 - Module projects register their controllers with `AddApplicationPart` (through `IModule.ControllersAssembly` and `AddModules`) so `Crm.Host` finds them without reflection scanning of the whole app.
@@ -100,7 +102,7 @@ public interface IModule
 - One `DbContext` per module: `HasDefaultSchema("<schema>")`, `MigrationsHistoryTable("__EFMigrationsHistory", "<schema>")`, own migrations assembly.
 - Primary keys are `Guid` (version 7) generated in the application.
 - Every table carries `OwnerTeamId`, `BusinessUnitId` where records are access-controlled, plus `CreatedAt/By`, `UpdatedAt/By`, and a `rowversion` concurrency token.
-- Custom fields: definitions in `config`; values in an `nvarchar(max)` JSON column on the owning row, validated through `Crm.Config.Contracts`.
+- Custom fields: definitions in `config`; values in an `nvarchar(max)` JSON column on the owning row, validated through a `Crm.Mediator.Contracts.Config` query.
 - Global query filters apply the current user's visibility scope in each DbContext. Negative tests prove another business unit cannot see the row.
 - Dev: `make db-reset`. Azure: `Crm.Migrator` run by the deployment identity. The runtime identity has no DDL rights; a startup test asserts the host never calls `Migrate()`.
 
@@ -116,9 +118,9 @@ public interface IModule
 
 There is no other channel between modules: no injected services from another module, no shared persistence code (ADR-009).
 
-Mediator: `IMediator` (`Send`) and `IEventPublisher` (`Publish`) in `Crm.Platform.Messaging`, written in-house. Every `Send` runs a pipeline: correlation, structured logging (type and correlation ID only), validation of the request's data annotations, authorisation as the current user (`[RequiresPolicy]`, otherwise signed in), and audit of permission-relevant reads (S2). `Publish` sets correlation and causation from the envelope. Modules register handlers in `IModule.AddServices` with `AddRequestHandler<T>()` and `AddEventSubscriber<T>()`. Each request type has exactly one handler, in the module that owns it; startup fails otherwise.
+Mediator: `IMediator` (`Send`) and `IEventPublisher` (`Publish`) in `Crm.Mediator`, written in-house. Every `Send` runs a pipeline: correlation, structured logging (type and correlation ID only), validation of the request's data annotations, authorisation as the current user (`[RequiresPolicy]`, otherwise signed in), and audit of permission-relevant reads (S2). `Publish` sets correlation and causation from the envelope. Modules register handlers in `IModule.AddServices` with `AddRequestHandler<T>()` and `AddEventSubscriber<T>()`. Each request type has exactly one handler, in the module that owns it; startup fails otherwise.
 
-Outbox: each module owns `outbox_messages` and `inbox_messages` in its schema, mapped in its own `DbContext`. Outbox rows are written by a `SaveChanges` hook in the same transaction as the change. A hosted relay registered by the module reads only its own outbox, takes `sp_getapplock` on a per-module resource so one instance relays, calls `IMediator.Publish`, retries with backoff, dead-letters, and marks messages done. Subscribers record processed message IDs in their own inbox in the same transaction as their change. The scaffolder generates this code; a conformance suite in `Crm.Platform.Testing` and a drift check in `make verify` keep the copies identical.
+Outbox: each module owns `outbox_messages` and `inbox_messages` in its schema, mapped in its own `DbContext`. Outbox rows are written by a `SaveChanges` hook in the same transaction as the change. A hosted relay registered by the module reads only its own outbox, takes `sp_getapplock` on a per-module resource so one instance relays, calls `IMediator.Publish`, retries with backoff, dead-letters, and marks messages done. Subscribers record processed message IDs in their own inbox in the same transaction as their change. The scaffolder generates this code; a conformance suite in `Crm.Testing` and a drift check in `make verify` keep the copies identical.
 
 ## 6. Identity and access
 
@@ -126,7 +128,7 @@ Outbox: each module owns `outbox_messages` and `inbox_messages` in its schema, m
 - Sign-in: OpenID Connect to Entra ID (Microsoft.Identity.Web), cookie session (`SameSite=Strict`, `Secure`, `HttpOnly`), antiforgery token for state-changing calls from the SPA.
 - Authorisation: Entra **app roles** map to application roles. Teams and business units are managed in the Access module and assigned to users there (avoids the Entra group-overage limit).
 - `ICurrentUser` exposes user ID (GUID), roles, team IDs, business-unit IDs. Every module reads it from the Platform kernel. It is built once per scope from `IUserContext` (the request's user by default; work outside a request supplies its own principal). An authenticated principal without a GUID user ID fails closed.
-- Roles (`Admin`, `Sales`, `Delivery`, `Finance`, `Auditor`, `ReadOnly`) are constants in `Crm.Platform.Security.Roles`. `AddCrmAuthorization()` registers the fallback policy and one policy per role (`Policies.Admin` and so on); `AddRolePolicy` adds others. Endpoints use `[Authorize(Policy = Policies.X)]`. An architecture test requires every endpoint to name a policy unless it is on the allow-list (health, SPA shell, `/api` catch-all).
+- Roles (`Admin`, `Sales`, `Delivery`, `Finance`, `Auditor`, `ReadOnly`) are constants in `Crm.SharedKernel.Security.Roles`. `AddCrmAuthorization()` registers the fallback policy and one policy per role (`Policies.Admin` and so on); `AddRolePolicy` adds others. Endpoints use `[Authorize(Policy = Policies.X)]`. An architecture test requires every endpoint to name a policy unless it is on the allow-list (health, SPA shell, `/api` catch-all).
 - Service-to-service callers (R4) use Entra app registrations or managed identities with JWT bearer validation. No custom API keys.
 - Conditional Access (phishing-resistant MFA, compliant device) is configured in Entra and recorded as evidence in S3.
 
@@ -144,7 +146,7 @@ Outbox: each module owns `outbox_messages` and `inbox_messages` in its schema, m
 - Microsoft Agent Framework hosted in `Crm.Assistant`. Providers behind `IChatClient`: Azure OpenAI, OpenAI, Anthropic (direct), Claude in Microsoft Foundry. Config key `Ai:Provider`.
 - Production default is Azure OpenAI in an Australian region over a private endpoint with Entra authentication. Direct OpenAI and Anthropic APIs are for development with synthetic data; startup validation blocks them in Production unless `Ai:AllowExternalProviders=true` is set after approval.
 - Skills: `SKILL.md` files per module (`src/Modules/<Module>/Crm.<Module>/Skills/`), loaded by role through the Agent Framework skills provider. Script execution is disabled.
-- Tools: typed C# functions sending module Contracts queries and commands through `IMediator` as the signed-in user. Reads run freely; writes return a proposal that the user approves in the UI.
+- Tools: typed C# functions sending `Crm.Mediator.Contracts` queries and commands through `IMediator` as the signed-in user. Reads run freely; writes return a proposal that the user approves in the UI.
 - Prompts and tool calls are audited. Records with handling markers are never sent to a model.
 
 ## 9. Testing architecture
@@ -159,7 +161,7 @@ Outbox: each module owns `outbox_messages` and `inbox_messages` in its schema, m
 | Frontend unit and component | Vitest, Testing Library, MSW | none |
 | End to end | Playwright (few journeys) | real stack, dev login |
 
-The SQL fixture (`Crm.Platform.Testing.SqlFixture`) reads `CRM_SQL_SERVER`, `CRM_SQL_USER` and `CRM_SQL_PASSWORD` (devcontainer: the `db` service; CI: service container). It creates a uniquely named database **per test class** (so parallel classes cannot collide under Respawn) and resets data with Respawn between tests. From S1-4 it also applies migrations through `Crm.Migrator`. See `docs/testing.md`.
+The SQL fixture (`Crm.Testing.SqlFixture`) reads `CRM_SQL_SERVER`, `CRM_SQL_USER` and `CRM_SQL_PASSWORD` (devcontainer: the `db` service; CI: service container). It creates a uniquely named database **per test class** (so parallel classes cannot collide under Respawn) and resets data with Respawn between tests. From S1-4 it also applies migrations through `Crm.Migrator`. See `docs/testing.md`.
 
 ## 10. Decisions to confirm (record outcomes in `docs/adr/`)
 
@@ -177,3 +179,4 @@ The SQL fixture (`Crm.Platform.Testing.SqlFixture`) reads `CRM_SQL_SERVER`, `CRM
 | ADR-010 | Package versions | Central package management; versions from the feed, logged with date (**accepted**, S0-2) |
 | ADR-011 | API access defaults | Deny by default; open only via named `HostPolicies`; anonymous unknown routes get 401 (**accepted**, S0-4) |
 | ADR-012 | Module type visibility | Only the `IModule` class is public in a module implementation; internal controllers discovered in module assemblies (**accepted**, S1-1) |
+| ADR-013 | Project structure | Host, SharedKernel, Mediator (with every cross-module message), one library per module referencing only SharedKernel and Mediator (**accepted**, S1-3) |

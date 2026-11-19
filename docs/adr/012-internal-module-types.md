@@ -10,13 +10,13 @@ CLAUDE.md makes services "registered by interface" and ADR-009 says only Contrac
 
 1. In a module implementation project (`Crm.<Module>`), every type is `internal` except the class implementing `IModule`, which `Crm.Host` creates.
 2. Controllers, API DTOs, services, models, mappers, validators and handlers are all `internal`.
-3. `Crm.Platform`'s `AddModules` adds a `ModuleControllerFeatureProvider` that also accepts non-public `ControllerBase` subclasses, **only in module assemblies** (each `IModule.ControllersAssembly`). Elsewhere MVC's public-only rule is unchanged.
+3. `Crm.SharedKernel`'s `AddModules` adds a `ModuleControllerFeatureProvider` that also accepts non-public `ControllerBase` subclasses, **only in module assemblies** (each `IModule.ControllersAssembly`). Elsewhere MVC's public-only rule is unchanged.
 
-Enforced by `Module_Types_AreInternalUnlessInContracts` (architecture tests), and by `AddModules_InternalControllerInModuleAssembly_IsDiscovered` and `AddModules_InternalControllerOutsideModuleAssemblies_IsNotDiscovered` (`Crm.Platform.Tests`).
+Enforced by `Module_Types_AreInternal_ExceptTheModuleClass` (architecture tests), and by `AddModules_InternalControllerInModuleAssembly_IsDiscovered` and `AddModules_InternalControllerOutsideModuleAssemblies_IsNotDiscovered` (`Crm.SharedKernel.Tests`).
 
 ## Consequences
 
-- Another module cannot compile against a module's services, DTOs or controllers, even by mistake; only Contracts and the mediator are available to it.
+- Another module cannot compile against a module's services, DTOs or controllers, even by mistake; only the mediator and its messages are available to it (and since ADR-013 it cannot reference another module at all).
 - Routing, model binding, filters and OpenAPI generation work as usual; they use the discovered controller types regardless of visibility.
 - Unit tests inside a module's test project need `InternalsVisibleTo` from the module (the scaffolder adds it, S1-4).
 - `Crm.Host`'s own controllers (health) stay public; the host is not a module.
