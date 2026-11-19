@@ -12,11 +12,17 @@
     <PackageReference Include="xunit.v3" />
   </ItemGroup>
 
-  <!-- Production projects under test. Modules are added here as they are created (S1-2 scaffolder). -->
+  <!-- Production projects under test. Modules are added here as they are created (S1-4 scaffolder). -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\Crm.Host\Crm.Host.csproj" />
     <ProjectReference Include="..\..\src\Crm.Migrator\Crm.Migrator.csproj" />
     <ProjectReference Include="..\..\src\Crm.Platform\Crm.Platform.csproj" />
+  </ItemGroup>
+
+  <!-- Test-only modules the module rules are proven against (tests/Fixtures/README.md). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Fixtures\Modules\Sample\Fixture.Sample\Fixture.Sample.csproj" />
+    <ProjectReference Include="..\Fixtures\Modules\Rogue\Fixture.Rogue\Fixture.Rogue.csproj" />
   </ItemGroup>
 
 </Project>
