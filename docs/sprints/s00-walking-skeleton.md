@@ -138,13 +138,15 @@ Done when: `make test-int` runs against the compose database; documented in `doc
 
 Evidence: [docs/evidence/s00/S0-9-test-harness.md](../evidence/s00/S0-9-test-harness.md); guide in [docs/testing.md](../testing.md). Split into 9a (SQL fixture, Respawn, credentials from the environment), 9b (fake auth, `TestWebAppFactory`, Bogus builders) and 9c (architecture tests) to stay near ~400 lines each. Database per test class instead of per assembly (see evidence). Containers created before this story need a rebuild for `CRM_SQL_PASSWORD`.
 
-### S0-10 CI, hooks and supply chain (E4, E39)
+### ✅ S0-10 CI, hooks and supply chain (E4, E39)
 
 Tests first: a workflow lint (`actionlint` in `make lint` when present) and a deliberately vulnerable package check proving the audit step fails (verify then remove).
 
 Implement: `.github/workflows/ci.yml` running `make verify` with a SQL Server service; `dotnet list package --vulnerable --include-transitive` and `pnpm audit` gates; Dependabot (or Renovate) for NuGet, npm, Actions and the devcontainer; secret scanning and push protection; CodeQL; pinned action SHAs; SBOM generation (CycloneDX); `.githooks`.
 
 Done when: CI green on a PR; branch protection requires CI and one review; SBOM artifact produced.
+
+Evidence: [docs/evidence/s00/S0-10-ci-supply-chain.md](../evidence/s00/S0-10-ci-supply-chain.md). GitHub done-when items (CI green on a PR, SBOM artifact, branch protection) confirmed by the developer on 2026-11-19.
 
 ### ✅ S0-11 Host on MVC controllers (E46): follow-up to the revised S0-4
 

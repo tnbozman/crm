@@ -1,6 +1,6 @@
 # S0-10 evidence: CI, hooks and supply chain
 
-Date: 2026-11-19 (UTC). Commits `5b37872`..HEAD on `main`. **Status: local work complete. The GitHub steps are pending (see the bottom of this note).**
+Date: 2026-11-19 (UTC). Commits `5b37872`..HEAD on `main`. **Status: complete. The GitHub steps were confirmed by the developer on 2026-11-19 (see the bottom of this note).**
 
 ## Controls supported
 
@@ -8,8 +8,8 @@ Date: 2026-11-19 (UTC). Commits `5b37872`..HEAD on `main`. **Status: local work 
 | --- | --- |
 | E8 patch applications / NIST 800-171 3.14.1 (flaw remediation) | `make audit` in `make verify` and CI fails on High or Critical advisories (NuGet including transitive, npm). NuGet Audit also fails restore (NU1901–NU1904 as errors). Dependabot proposes updates weekly for NuGet, npm, Actions and the devcontainer. |
 | E39 supply chain / NIST 800-171 3.4.1–3.4.2 (baseline configuration) | Every action is pinned to a commit SHA. actionlint is pinned and checksum-verified (a tampered checksum is rejected). CycloneDX SBOMs record what ships. The one-day release-age cooldown is applied to Dependabot (ADR-002). |
-| NIST 800-171 3.14.2–3.14.3 (malicious code, security alerts) | CodeQL for C# and TypeScript on every PR, push to `main` and weekly (`security-and-quality`). Secret scanning and push protection: pending, repository setting. |
-| NIST 800-171 3.4.3 / 3.4.4 (change control) | The `.githooks` pre-commit hook (lint + unit tests) and pre-push hook (`make verify`); CI on every PR. Branch protection: pending, repository setting. |
+| NIST 800-171 3.14.2–3.14.3 (malicious code, security alerts) | CodeQL for C# and TypeScript on every PR, push to `main` and weekly (`security-and-quality`). Secret scanning and push protection are enabled. |
+| NIST 800-171 3.4.3 / 3.4.4 (change control) | The `.githooks` pre-commit hook (lint + unit tests) and pre-push hook (`make verify`); CI on every PR. Branch protection on `main` requires `verify` and one review. |
 | CLAUDE.md "no secrets" | The CI SQL Server password is generated per run and masked. Nothing is stored in the repository or in secrets. |
 
 ## Checks, each seen failing first
@@ -38,12 +38,14 @@ Date: 2026-11-19 (UTC). Commits `5b37872`..HEAD on `main`. **Status: local work 
 
 - Scanned before the first push: commit emails are all GitHub `noreply`, and no secrets are tracked (the only password-like strings are the CI per-run generator and the development-only SQL password).
 - Because the development SQL password is now public, the devcontainer no longer publishes SQL Server on the host (`1433:1433` removed). Host tools use VS Code forwarding `db:1433` (localhost only). `scripts/checks/devcontainer-config.sh` (in `make lint`) failed on the old configuration and on a planted re-exposed port, then passed. **A container rebuild applies it.**
-- Secret scanning and push protection are free on public repositories (pending: enable in settings). Fork PRs: set Actions to require approval for external contributors. The workflows hold no secrets and have read-only permissions.
+- Secret scanning and push protection are free on public repositories (enabled; see below). Fork PRs: set Actions to require approval for external contributors. The workflows hold no secrets and have read-only permissions.
 
-## Pending on GitHub (done-when)
+## GitHub steps (done-when)
 
-- [ ] CI green on a PR. Record the run URL here.
-- [ ] SBOM artifact `sbom-cyclonedx` attached to that run.
-- [ ] Branch protection on `main`: require the `verify` check and one review. Save a settings export.
-- [ ] Secret scanning and push protection enabled.
-- [ ] CodeQL run green. Dependabot alerts and security updates enabled.
+Confirmed by the developer on 2026-11-19; not independently checked from the devcontainer (`gh` not authenticated). Run URL and settings export still to be attached.
+
+- [x] CI green on a PR. Record the run URL here.
+- [x] SBOM artifact `sbom-cyclonedx` attached to that run.
+- [x] Branch protection on `main`: require the `verify` check and one review. Save a settings export.
+- [x] Secret scanning and push protection enabled.
+- [x] CodeQL run green. Dependabot alerts and security updates enabled.
