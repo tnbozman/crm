@@ -19,4 +19,20 @@
     <InternalsVisibleTo Include="Crm.Host.Tests" />
   </ItemGroup>
 
+  <!-- The Vue app (src/web) is built into wwwroot by dotnet build. Skip with -p:SkipFrontend=true. -->
+  <PropertyGroup>
+    <FrontendDir>$(MSBuildThisFileDirectory)..\web\</FrontendDir>
+    <SkipFrontend Condition="'$(SkipFrontend)' == ''">false</SkipFrontend>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrontendInputs Include="$(FrontendDir)src\**;$(FrontendDir)index.html;$(FrontendDir)package.json;$(FrontendDir)pnpm-lock.yaml;$(FrontendDir)vite.config.ts;$(FrontendDir)tsconfig*.json" />
+  </ItemGroup>
+
+  <Target Name="BuildFrontend" BeforeTargets="BeforeBuild" Condition="'$(SkipFrontend)' != 'true'"
+          Inputs="@(FrontendInputs)" Outputs="$(MSBuildProjectDirectory)\wwwroot\index.html">
+    <Exec Command="pnpm install --frozen-lockfile" WorkingDirectory="$(FrontendDir)" />
+    <Exec Command="pnpm run build" WorkingDirectory="$(FrontendDir)" />
+  </Target>
+
 </Project>

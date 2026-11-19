@@ -20,6 +20,12 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+
+// The built SPA (wwwroot) is public: static files are served before authentication.
+// UseStaticFiles reads wwwroot from disk, which works for files the frontend build creates (docs/environment.md §4).
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 

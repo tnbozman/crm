@@ -10,6 +10,11 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    // The .NET host serves the SPA; dotnet build runs this build (S0-7, docs/environment.md §4).
+    outDir: '../Crm.Host/wwwroot',
+    emptyOutDir: true,
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
