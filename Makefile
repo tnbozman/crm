@@ -17,7 +17,7 @@ todo = @echo "TODO($(1)): $(2)" >&2
         test test-unit test-int test-arch test-web test-e2e \
         lint format format-check api-client api-client-check \
         db-up db-reset migrate migration-add module-new \
-        publish check-dev check-spa verify ai-smoke coverage clean
+        publish check-dev check-spa audit verify ai-smoke coverage clean
 
 help:            ## list targets
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-18s %s\n", $$1, $$2}'
@@ -122,7 +122,10 @@ check-spa:       ## frontend build checks: incremental build, clean publish cont
 	@bash scripts/checks/frontend-incremental.sh
 	@bash scripts/checks/publish-contains-spa.sh
 
-verify: lint build test api-client-check check-spa   ## what CI runs
+audit:           ## fail on High/Critical vulnerabilities (NuGet incl. transitive, npm)
+	@bash scripts/checks/dependency-audit.sh
+
+verify: lint build test api-client-check audit check-spa   ## what CI runs
 
 ai-smoke:        ## calls each configured AI provider once (skipped without keys)
 	$(call todo,S2-7,make ai-smoke calls each configured AI provider)
