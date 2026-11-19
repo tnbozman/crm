@@ -59,7 +59,7 @@ Done when: every target in the spec runs or is explicitly stubbed with a clear m
 
 Evidence: [docs/evidence/s00/S0-3-makefile.md](../evidence/s00/S0-3-makefile.md).
 
-### S0-4 Host with health endpoint (E46)
+### ✅ S0-4 Host with health endpoint (E46)
 
 Tests first (xUnit, `WebApplicationFactory`):
 - `GetHealth_Anonymous_Returns200WithStatusOk` (health is the only anonymous API).
@@ -69,6 +69,8 @@ Tests first (xUnit, `WebApplicationFactory`):
 Implement: minimal host, fallback authorisation policy, problem details, `/api/v1/health`, OpenAPI document generation.
 
 Done when: tests green; OpenAPI file emitted by `make api-client`.
+
+Evidence: [docs/evidence/s00/S0-4-host-health.md](../evidence/s00/S0-4-host-health.md). Note for S0-7: anonymous requests to unknown `/api` routes get 401 by design, so the unknown-route test must use a signed-in client.
 
 ### S0-5 Vue 3 app and tooling (E46)
 
