@@ -14,4 +14,12 @@ internal static class ModuleRules
                 .Select(r => $"{m.Implementation.GetName().Name} references {r}"))
             .ToList();
     }
+
+    public static IReadOnlyList<string> ContractsReferencesToEfCore(IReadOnlyList<ModuleUnderTest> modules) =>
+        modules
+            .SelectMany(m => m.Contracts.GetReferencedAssemblies()
+                .Select(r => r.Name!)
+                .Where(r => r.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal))
+                .Select(r => $"{m.Contracts.GetName().Name} references {r}"))
+            .ToList();
 }

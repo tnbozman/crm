@@ -24,6 +24,7 @@
 | 2026-11-19 | xunit.v3.extensibility.core | 4.0.3 | matches xunit.v3 | S0-9 |
 | 2026-11-19 | Bogus | 35.6.5 | latest stable on nuget.org | S0-9 |
 | 2026-11-19 | NetArchTest.Rules | 1.3.2 | latest stable on nuget.org | S0-9 |
+| 2026-11-19 | Microsoft.EntityFrameworkCore.SqlServer | 10.0.15 | latest 10.x; 11.0.0 targets .NET 11. First used by the architecture test fixtures | S1-1 |
 
 Also pinned outside `Directory.Packages.props`:
 
