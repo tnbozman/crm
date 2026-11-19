@@ -5,15 +5,19 @@ namespace Crm.Platform.Security;
 /// <summary>An <see cref="ICurrentUser"/> read once from a claims principal.</summary>
 public sealed class CurrentUser : ICurrentUser
 {
-    private CurrentUser(Guid userId, IEnumerable<string> roles, IEnumerable<Guid> teamIds, IEnumerable<Guid> businessUnitIds)
+    private CurrentUser(bool isAuthenticated, Guid userId, IEnumerable<string> roles, IEnumerable<Guid> teamIds, IEnumerable<Guid> businessUnitIds)
     {
+        IsAuthenticated = isAuthenticated;
         UserId = userId;
         Roles = roles.ToHashSet(StringComparer.Ordinal);
         TeamIds = teamIds.ToHashSet();
         BusinessUnitIds = businessUnitIds.ToHashSet();
     }
 
-    public bool IsAuthenticated => true;
+    /// <summary>Nobody signed in: no ID, no roles, no teams.</summary>
+    public static CurrentUser Anonymous { get; } = new(isAuthenticated: false, Guid.Empty, [], [], []);
+
+    public bool IsAuthenticated { get; }
 
     public Guid UserId { get; }
 
@@ -29,7 +33,13 @@ public sealed class CurrentUser : ICurrentUser
     {
         ArgumentNullException.ThrowIfNull(principal);
 
+        if (principal.Identity?.IsAuthenticated != true)
+        {
+            return Anonymous;
+        }
+
         return new CurrentUser(
+            isAuthenticated: true,
             Guid.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!),
             principal.FindAll(ClaimTypes.Role).Select(c => c.Value),
             Guids(principal, CrmClaimTypes.Team),

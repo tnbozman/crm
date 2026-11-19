@@ -36,4 +36,16 @@ public sealed class CurrentUserTests
         user.IsInRole(Roles.Finance).ShouldBeTrue();
         user.IsInRole(Roles.Admin).ShouldBeFalse();
     }
+
+    [Fact]
+    public void CurrentUser_FromUnauthenticatedPrincipal_IsAnonymous()
+    {
+        var user = CurrentUser.FromPrincipal(new ClaimsPrincipal(new ClaimsIdentity()));
+
+        user.IsAuthenticated.ShouldBeFalse();
+        user.UserId.ShouldBe(Guid.Empty);
+        user.Roles.ShouldBeEmpty();
+        user.TeamIds.ShouldBeEmpty();
+        user.BusinessUnitIds.ShouldBeEmpty();
+    }
 }
