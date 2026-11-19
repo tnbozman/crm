@@ -11,8 +11,35 @@ namespace Crm.Host.Tests;
 
 /// <summary>ADR-011: endpoints open to anonymous callers only through named policies, and only where allowed.</summary>
 [Trait("Category", "Architecture")]
-public sealed class EndpointPolicyTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public sealed class EndpointPolicyTests(WebApplicationFactory<Program> factory, TestHostFactory testHost)
+    : IClassFixture<WebApplicationFactory<Program>>, IClassFixture<TestHostFactory>
 {
+    /// <summary>
+    /// Endpoints allowed to carry no named policy of their own (S1-2). Health and the SPA shell are anonymous by
+    /// HostPolicies.Anonymous; the /api catch-all relies on the fallback policy so signed-in callers get 404 (ADR-011).
+    /// </summary>
+    private static readonly string[] AllowList =
+    [
+        "controller Health: api/v1/health",
+        "route {*path:nonfile}",
+        "route /api/{**path}",
+    ];
+
+    [Fact]
+    public void All_Endpoints_HaveAuthorisation_OrAreInAnonymousAllowList_FlagsEndpointsWithoutAPolicy()
+    {
+        var unprotected = EndpointsWithoutANamedPolicy(testHost);
+
+        unprotected.ShouldBe(
+            [
+                "controller TestOnly: api/v1/test-only/me",
+                "controller TestOnly: api/v1/test-only/missing",
+                "controller TestOnly: api/v1/test-only/protected",
+                "controller TestOnly: api/v1/test-only/throws",
+            ],
+            "the test host's throwaway endpoints name no policy; admin-only names Policies.Admin");
+    }
+
     [Fact]
     public void HealthController_IsOnlyEndpointUsingAnonymousPolicy()
     {
@@ -32,6 +59,16 @@ public sealed class EndpointPolicyTests(WebApplicationFactory<Program> factory) 
 
         allowAnonymous.ShouldBeEmpty("open an endpoint with a named HostPolicies policy, not [AllowAnonymous] (ADR-011)");
     }
+
+    /// <summary>Endpoints that name neither a policy (other than Anonymous) nor roles, and are not on the allow-list.</summary>
+    private static List<string> EndpointsWithoutANamedPolicy(WebApplicationFactory<Program> host) =>
+        host.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>()
+            .Where(e => !e.Metadata.GetOrderedMetadata<IAuthorizeData>().Any(a =>
+                (!string.IsNullOrEmpty(a.Policy) && a.Policy != HostPolicies.Anonymous) || !string.IsNullOrEmpty(a.Roles)))
+            .Select(Describe)
+            .Except(AllowList, StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .ToList();
 
     private List<RouteEndpoint> Endpoints() =>
         factory.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>().ToList();
