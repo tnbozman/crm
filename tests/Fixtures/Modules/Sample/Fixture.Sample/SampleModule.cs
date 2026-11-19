@@ -14,8 +14,6 @@ public sealed class SampleModule : IModule
 
     public Assembly ControllersAssembly => typeof(SampleModule).Assembly;
 
-    public Assembly ContractsAssembly => typeof(Contracts.GetSampleSummary).Assembly;
-
     public void AddServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton(TimeProvider.System);

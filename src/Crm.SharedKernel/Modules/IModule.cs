@@ -17,9 +17,6 @@ public interface IModule
     /// <summary>The assembly whose controllers the host adds with AddApplicationPart.</summary>
     Assembly ControllersAssembly { get; }
 
-    /// <summary>The module's Contracts assembly. Each request in it must have exactly one handler in this module.</summary>
-    Assembly ContractsAssembly { get; }
-
     /// <summary>Registers the module's services, DbContext and options.</summary>
     void AddServices(IServiceCollection services, IConfiguration configuration);
 }

@@ -1,16 +1,15 @@
-using Crm.SharedKernel.Modules;
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Crm.Mediator;
 
-/// <summary>Startup check: every request in a module's Contracts has exactly one registered handler (ADR-009).</summary>
+/// <summary>Startup check: every request under the contracts namespace has exactly one registered handler (ADR-013).</summary>
 internal static class RequestHandlerValidation
 {
-    public static void ThrowIfInvalid(IServiceCollection services, ModuleRegistry registry)
+    public static void ThrowIfInvalid(IServiceCollection services, Assembly contractsAssembly, string contractsNamespace)
     {
-        var problems = registry.Modules
-            .SelectMany(m => m.ContractsAssembly.GetTypes())
-            .Where(t => t is { IsAbstract: false, IsInterface: false })
+        var problems = contractsAssembly.GetTypes()
+            .Where(t => t is { IsAbstract: false, IsInterface: false } && IsUnder(t.Namespace, contractsNamespace))
             .SelectMany(t => t.GetInterfaces()
                 .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRequest<>))
                 .Select(i => typeof(IRequestHandler<,>).MakeGenericType(t, i.GetGenericArguments()[0])))
@@ -24,4 +23,7 @@ internal static class RequestHandlerValidation
             throw new InvalidOperationException("Mediator handlers are misconfigured: " + string.Join("; ", problems) + ".");
         }
     }
+
+    private static bool IsUnder(string? typeNamespace, string root) =>
+        typeNamespace is not null && (typeNamespace == root || typeNamespace.StartsWith(root + ".", StringComparison.Ordinal));
 }

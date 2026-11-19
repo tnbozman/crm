@@ -1,3 +1,4 @@
+using System.Reflection;
 using Crm.SharedKernel.Modules;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -5,14 +6,20 @@ namespace Crm.Mediator;
 
 public static class MessagingServiceCollectionExtensions
 {
+    /// <summary>The namespace every cross-module message lives under, one child namespace per owning module (ADR-013).</summary>
+    public const string ContractsNamespace = "Crm.Mediator.Contracts";
+
     /// <summary>
-    /// Registers the mediator for the host's modules and fails startup if any request in
-    /// Crm.Mediator.Contracts has no handler or several (ADR-013). Call after AddModules.
+    /// Registers the mediator for the host's modules and fails startup if any request under the contracts namespace
+    /// has no handler or several (ADR-013). Call after AddModules, so the modules' handlers are registered.
+    /// Tests may point it at their own contracts.
     /// </summary>
-    public static IServiceCollection AddMediator(this IServiceCollection services, ModuleRegistry registry)
+    public static IServiceCollection AddMediator(
+        this IServiceCollection services, ModuleRegistry registry, Assembly? contractsAssembly = null, string contractsNamespace = ContractsNamespace)
     {
+        ArgumentNullException.ThrowIfNull(registry);
         services.AddMediator();
-        RequestHandlerValidation.ThrowIfInvalid(services, registry);
+        RequestHandlerValidation.ThrowIfInvalid(services, contractsAssembly ?? typeof(IMediator).Assembly, contractsNamespace);
         return services;
     }
 

@@ -12,8 +12,6 @@ public sealed class RogueModule : IModule
 
     public Assembly ControllersAssembly => typeof(RogueModule).Assembly;
 
-    public Assembly ContractsAssembly => typeof(Contracts.RogueChanged).Assembly;
-
     // Violation: registers (and so can resolve) a type from another module's implementation.
     public void AddServices(IServiceCollection services, IConfiguration configuration) =>
         services.AddSingleton<SampleModule>();
