@@ -54,6 +54,15 @@ public sealed class LayeringTests
             ignoreOrder: true);
 
     [Fact]
+    public void Controllers_HaveNoTryCatch() =>
+        LayeringRules.ControllerFilesWithTryCatch(CrmAssemblies.All).ShouldBeEmpty("errors are typed exceptions mapped by the platform filter");
+
+    [Fact]
+    public void Controllers_HaveNoTryCatch_FlagsRogueOnly() =>
+        LayeringRules.ControllerFilesWithTryCatch(FixtureModules.Implementations).ShouldBe(
+            ["tests/Fixtures/Modules/Rogue/Fixture.Rogue/Controllers/RoguesController.cs"]);
+
+    [Fact]
     public void Dtos_DoNotReference_Models() =>
         LayeringRules.DtosReferencingModels(CrmAssemblies.All).ShouldBeEmpty("DTOs are the HTTP contract and know nothing of EF models");
 

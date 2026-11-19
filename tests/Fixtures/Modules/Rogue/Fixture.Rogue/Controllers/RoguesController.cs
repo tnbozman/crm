@@ -15,7 +15,18 @@ internal sealed class RoguesController(RogueService service) : ControllerBase
     /// <summary>Violation: a controller depending on a concrete service, not its interface.</summary>
     [HttpGet]
     [ProducesResponseType<string>(StatusCodes.Status200OK)]
-    public ActionResult<string> Describe() => service.Describe();
+    public ActionResult<string> Describe()
+    {
+        // Violation: a controller shaping errors itself instead of throwing typed exceptions.
+        try
+        {
+            return service.Describe();
+        }
+        catch (InvalidOperationException)
+        {
+            return Problem();
+        }
+    }
 
     /// <summary>Violation: a controller reaching the DbContext and a Model.</summary>
     [HttpGet("{id:guid}")]

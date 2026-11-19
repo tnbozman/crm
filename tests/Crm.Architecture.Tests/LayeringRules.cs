@@ -1,12 +1,13 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using NetArchTest.Rules;
 
 namespace Crm.Architecture.Tests;
 
 /// <summary>CLAUDE.md layering rules over a set of assemblies. Each returns the violations it finds.</summary>
-internal static class LayeringRules
+internal static partial class LayeringRules
 {
     public static IReadOnlyList<string> ControllersReferencingDbContextOrModels(IReadOnlyList<Assembly> assemblies) =>
         Failing(Types.InAssemblies(assemblies)
@@ -52,6 +53,24 @@ internal static class LayeringRules
         var assembly = type.Assembly.GetName().Name ?? string.Empty;
         return assembly.StartsWith("System", StringComparison.Ordinal) || assembly.StartsWith("Microsoft.", StringComparison.Ordinal);
     }
+
+    /// <summary>Source files under a Controllers folder that contain a try block (comments ignored).</summary>
+    public static IReadOnlyList<string> ControllerFilesWithTryCatch(IReadOnlyList<Assembly> assemblies) =>
+        assemblies
+            .Select(ProjectSources.DirectoryOf)
+            .Select(project => Path.Combine(project, "Controllers"))
+            .Where(Directory.Exists)
+            .SelectMany(folder => Directory.EnumerateFiles(folder, "*.cs", SearchOption.AllDirectories))
+            .Where(file => TryBlock().IsMatch(Comments().Replace(File.ReadAllText(file), string.Empty)))
+            .Select(ProjectSources.Relative)
+            .Order(StringComparer.Ordinal)
+            .ToList();
+
+    [GeneratedRegex(@"\btry\s*\{")]
+    private static partial Regex TryBlock();
+
+    [GeneratedRegex(@"//[^\n]*|/\*.*?\*/", RegexOptions.Singleline)]
+    private static partial Regex Comments();
 
     public static IReadOnlyList<string> DtosReferencingModels(IReadOnlyList<Assembly> assemblies)
     {
