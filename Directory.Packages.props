@@ -1,7 +1,7 @@
 <Project>
 
   <!-- Central package versions. Query the feed for the latest stable before adding or bumping
-       with "dotnet package search", exact match. Baseline recorded in docs/adr/0010-package-baseline.md. -->
+       with "dotnet package search", exact match. Baseline recorded in docs/adr/010-package-baseline.md. -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>

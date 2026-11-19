@@ -37,7 +37,7 @@ Implement: files from `docs/environment.md` §1–2, `global.json`, `.gitignore`
 
 Done when: container builds from scratch; `make doctor` green; post-create is idempotent (run twice).
 
-### S0-2 Solution layout, Directory.Build and central packages (E46)
+### ✅ S0-2 Solution layout, Directory.Build and central packages (E46)
 
 Tests first:
 - `Crm.Architecture.Tests` project exists with a failing test "solution has Crm.Host, Crm.Platform, Crm.Platform.Testing and Crm.Migrator projects".
@@ -46,6 +46,8 @@ Tests first:
 Implement: `Crm.slnx`, `Directory.Build.props` (nullable, warnings as errors, analyzers), `Directory.Packages.props` with versions queried from the feed, projects per `docs/architecture.md` §1.
 
 Done when: `dotnet build` clean with warnings-as-errors; package versions recorded with date in an ADR note.
+
+Evidence: [docs/evidence/s00/S0-2-build-baseline.md](../evidence/s00/S0-2-build-baseline.md); ADR-003 (test runner), ADR-010 (package baseline).
 
 ### S0-3 Makefile (E46)
 

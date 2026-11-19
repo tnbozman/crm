@@ -132,6 +132,8 @@ Notes: the `workspaces/crm` path must match `workspaceFolder`; the SA password i
 
 Recipes use tab indentation. Names are fixed; internals can change.
 
+> **Note (S0-2, ADR-003):** `dotnet test` runs on Microsoft.Testing.Platform. The VSTest `--filter` and `--collect` arguments below must become `--filter-trait`/`--filter-not-trait` and an MTP coverage extension when S0-3 implements these targets.
+
 ```make
 .DEFAULT_GOAL := help
 SHELL := /bin/bash
