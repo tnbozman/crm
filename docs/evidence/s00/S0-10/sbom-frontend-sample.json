@@ -1,0 +1,61 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "metadata": {
+    "timestamp": "2026-11-19T10:01:44.729Z",
+    "component": "crm-web"
+  },
+  "componentCount": 81,
+  "sample": [
+    {
+      "name": "vue-router",
+      "version": "5.5.1",
+      "purl": "pkg:npm/vue-router@5.5.1"
+    },
+    {
+      "name": "compiler-sfc",
+      "version": "3.5.45",
+      "purl": "pkg:npm/%40vue/compiler-sfc@3.5.45"
+    },
+    {
+      "name": "magic-string",
+      "version": "0.30.21",
+      "purl": "pkg:npm/magic-string@0.30.21"
+    },
+    {
+      "name": "sourcemap-codec",
+      "version": "1.6.0",
+      "purl": "pkg:npm/%40jridgewell/sourcemap-codec@1.6.0"
+    },
+    {
+      "name": "compiler-dom",
+      "version": "3.5.45",
+      "purl": "pkg:npm/%40vue/compiler-dom@3.5.45"
+    },
+    {
+      "name": "shared",
+      "version": "3.5.45",
+      "purl": "pkg:npm/%40vue/shared@3.5.45"
+    },
+    {
+      "name": "compiler-core",
+      "version": "3.5.45",
+      "purl": "pkg:npm/%40vue/compiler-core@3.5.45"
+    },
+    {
+      "name": "estree-walker",
+      "version": "2.0.2",
+      "purl": "pkg:npm/estree-walker@2.0.2"
+    },
+    {
+      "name": "parser",
+      "version": "7.29.14",
+      "purl": "pkg:npm/%40babel/parser@7.29.14"
+    },
+    {
+      "name": "types",
+      "version": "7.29.14",
+      "purl": "pkg:npm/%40babel/types@7.29.14"
+    }
+  ]
+}
