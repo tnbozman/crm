@@ -1,0 +1,12 @@
+<Project>
+
+  <!-- Quality gates for every project (docs/environment.md §6). Asserted by Crm.Architecture.Tests. -->
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisMode>Recommended</AnalysisMode>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+</Project>

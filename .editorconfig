@@ -65,6 +65,10 @@ dotnet_naming_symbols.interface.applicable_accessibilities = public, internal, p
 dotnet_naming_style.begins_with_i.required_prefix = I
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
 
+# Test names follow Method_Scenario_ExpectedResult (CLAUDE.md), which CA1707 forbids.
+[tests/**/*.cs]
+dotnet_diagnostic.CA1707.severity = none
+
 [*.{csproj,props,targets,xml,config,bicep,bicepparam}]
 indent_size = 2
 
