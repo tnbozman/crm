@@ -349,6 +349,7 @@ Required tests (S0): after `make build`, `GET /` returns the SPA `index.html`; `
 > - The `web dev` task runs `make dev-web` (Vite only). Every task runs exactly one `make` target.
 > - Vitest Explorer reads `vitest.rootConfig: "src/web/vite.config.ts"`. The `vitest.root` key is not a setting of Vitest Explorer 1.52 and was silently ignored.
 > - The Vite dev server uses port 5173 (`strictPort`) and proxies `/api` to `https://localhost:5001` with `secure: false`, because the development certificate is untrusted inside the container. The proxy target must be a URL of the `Host (.NET)` launch profile (check G).
+> - `make dev` passes `SkipFrontend=true` as an environment variable, because `dotnet watch` reads `-p` as `--project`, so the sketch in §3 cannot work. It uses `wait -n` so that the whole target stops if either process dies. `make check-dev` smoke-tests it.
 > - C# Dev Kit 3.40 needs no setting for Microsoft.Testing.Platform (ADR-003). It has no MTP option and detects MTP from `global.json`.
 
 Test running: C# Dev Kit Test Explorer runs and debugs xUnit tests; Vitest Explorer runs the frontend tests; Playwright extension runs e2e. Integration tests appear in Test Explorer and need the `db` service running (it is part of the devcontainer).
