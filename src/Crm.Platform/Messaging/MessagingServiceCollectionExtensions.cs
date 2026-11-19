@@ -7,6 +7,7 @@ public static class MessagingServiceCollectionExtensions
     /// <summary>Registers the mediator and its pipeline. Call once, in the host.</summary>
     public static IServiceCollection AddMediator(this IServiceCollection services)
     {
+        services.AddLogging();
         services.AddScoped<Mediator>();
         services.AddScoped<IMediator>(sp => sp.GetRequiredService<Mediator>());
         services.AddScoped<IEventPublisher>(sp => sp.GetRequiredService<Mediator>());
@@ -15,6 +16,7 @@ public static class MessagingServiceCollectionExtensions
 
         // The pipeline, outermost first (ADR-009).
         services.AddScoped<IRequestBehaviour, CorrelationBehaviour>();
+        services.AddScoped<IRequestBehaviour, LoggingBehaviour>();
         EventTypesIn(services);
         return services;
     }
