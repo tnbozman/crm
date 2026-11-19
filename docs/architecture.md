@@ -13,8 +13,17 @@ src/
   Crm.Platform/              kernel: IModule, event bus, outbox/inbox, ICurrentUser, auth, AI abstractions
   Crm.Platform.Testing/      SQL fixture, fake auth, builders, event-bus test double
   Modules/<Module>/
-    Crm.<Module>.Contracts/  public API of the module
-    Crm.<Module>/            internal implementation (internal visibility by default)
+    Crm.<Module>.Contracts/  public API of the module (interfaces, DTOs, events) for other modules
+    Crm.<Module>/            internal implementation, layered by folder:
+      Controllers/           ASP.NET Core controllers: HTTP only, thin
+      Services/              business logic and transactions (interface + implementation)
+      Dtos/                  request and response DTOs for this module's HTTP API
+      Models/                EF Core entity classes (never leave the module)
+      Persistence/           DbContext, IEntityTypeConfiguration classes, Migrations
+      Mapping/               explicit mappers between Models and DTOs
+      Validation/            request validators
+      Events/                handlers for integration events
+      Skills/                AI skills and tools (R6)
   web/                       Vue 3 app (Vite)
 tests/
   Crm.Architecture.Tests/
@@ -41,6 +50,30 @@ docs/
 | Automation | `automation` | Rules, webhooks, hand-offs | S17 |
 | Assistant | `assistant` | Skills, conversations, approvals | S25 |
 
+## 2a. Layering inside a module
+
+```
+HTTP request → Controller → Service → DbContext (Models) → SQL Server
+                  ↑ DTOs in/out          ↑ Models in/out
+```
+
+| Layer | Responsibility | May reference | Must not |
+| --- | --- | --- | --- |
+| Controller | Routing, authorisation attributes, model binding, status codes, calling one service method, returning DTOs | Services (interfaces), Dtos, `ICurrentUser` | Touch `DbContext` or Models; contain business rules; catch exceptions to shape errors (a filter does that) |
+| Service | Business rules, orchestration, transactions, raising outbox events, calling other modules through Contracts | `DbContext`, Models, Dtos, Mapping, other modules' Contracts | Reference `HttpContext`, controllers or ASP.NET types; return Models to controllers |
+| DTO | Shape of the HTTP contract: records with data annotations or validators, no behaviour | Nothing | Reference Models |
+| Model | EF Core entity: state plus invariants enforced through methods; private setters, no public parameterless constructor outside EF | Nothing outside the module | Be serialised or returned from any API; be used by other modules |
+| Mapper | Explicit static or injected mapping code (no reflection mapper by default) | Models, Dtos | Contain logic or queries |
+
+Rules:
+- No generic repository. Services use the module's `DbContext` directly; this keeps queries explicit and testable against real SQL.
+- Services expose an interface (`IOrganisationService`) used by controllers. Cross-module access goes through a separate **Contracts facade** (`IDirectoryQueries`) implemented in the module, usually delegating to its services. Contracts DTOs are distinct from API DTOs.
+- Queries project to DTOs (`Select`) rather than loading whole Models where the response is read-only.
+- Services throw typed domain exceptions (`NotFoundException`, `ConflictException`, `ValidationException`, `ForbiddenException`); a single exception filter in the platform maps them to RFC 9457 problem details. Controllers contain no try/catch.
+- Controllers use `[ApiController]`, attribute routing (`[Route("api/v1/<module>/<resource>")]`), `[Authorize]` with named policies, `CancellationToken` parameters, `ActionResult<T>` or `[ProducesResponseType]` for OpenAPI accuracy.
+- Models carry `OwnerTeamId`/`BusinessUnitId` where access-controlled; query filters live in the DbContext.
+- Module projects register their controllers with `AddApplicationPart` so `Crm.Host` finds them without reflection scanning of the whole app.
+
 ## 3. Module contract
 
 Each module exposes one `IModule` implementation in its implementation project:
@@ -51,7 +84,7 @@ public interface IModule
     string Name { get; }                       // "Directory"
     string Schema { get; }                     // "directory"
     void AddServices(IServiceCollection services, IConfiguration config);
-    void MapEndpoints(IEndpointRouteBuilder routes);   // under /api/v1/<module>
+    Assembly ControllersAssembly { get; }              // registered as an application part; routes under /api/v1/<module>
     IEnumerable<Type> DbContextTypes { get; }
 }
 ```
@@ -91,12 +124,10 @@ Outbox: each module has `outbox_messages` in its schema, written in the same tra
 
 ## 7. API
 
-- Minimal APIs grouped per module under `/api/v1/<module>`.
+- MVC controllers per resource under `/api/v1/<module>/<resource>`, one controller class per resource, DTOs in and out, never EF models.
 - OpenAPI generated at build; `make api-client` produces `src/web/src/api/` TypeScript types. CI fails on drift.
-- RFC 9457 problem details, FluentValidation (or built-in validation) at the boundary, ETag/rowversion for optimistic concurrency.
+- RFC 9457 problem details through an exception filter and `ProblemDetails` factory, request validation (data annotations for simple rules, validators for rules needing services) at the boundary, ETag/rowversion for optimistic concurrency.
 - Fallback authorisation policy requires an authenticated user.
-- Anonymous callers get 401 for every `/api` route except `/api/v1/health`, including routes that do not exist, so routes cannot be probed. Signed-in callers get 404 problem details for unknown routes. Opening an endpoint means naming a policy in `HostPolicies` (only `Anonymous`, used by health and the SPA shell fallback), with a test. The built SPA in `wwwroot` is served as public static files.
-- The OpenAPI document is committed at `openapi/Crm.Host.json` and regenerated by `make api-client`.
 
 ## 8. AI assistant (built S25–S28, spiked S2)
 
@@ -110,9 +141,10 @@ Outbox: each module has `outbox_messages` in its schema, written in the same tra
 
 | Layer | Tool | Database |
 | --- | --- | --- |
-| Domain and application | xUnit v3, Shouldly, NSubstitute | none |
-| Persistence | xUnit v3, SQL fixture, Respawn | real SQL Server, module schema |
-| API | `WebApplicationFactory`, fake auth scheme | real SQL Server |
+| Models (invariants), mappers, validators | xUnit v3, Shouldly | none |
+| Services | xUnit v3, Shouldly, SQL fixture, Respawn | real SQL Server, module schema |
+| Controllers (HTTP behaviour) | `WebApplicationFactory`, fake auth scheme | real SQL Server |
+| Persistence (configurations, migrations, filters) | xUnit v3, SQL fixture | real SQL Server, module schema |
 | Architecture | NetArchTest | none |
 | Frontend unit and component | Vitest, Testing Library, MSW | none |
 | End to end | Playwright (few journeys) | real stack, dev login |
@@ -123,14 +155,12 @@ The SQL fixture reads `CRM_SQL_SERVER` (devcontainer: the `db` service; CI: serv
 
 | # | Decision | Default in this plan |
 | --- | --- | --- |
-| ADR-001 | UI library | OpenVue 1.1.1 (MIT PrimeVue 4 fork), unstyled + Tailwind pass-through; only `src/web/src/ui` imports it (**accepted**, S0-6) |
-| ADR-002 | Package manager | pnpm, exact pins, release-age policy kept on (**accepted**, S0-5) |
-| ADR-003 | Test framework | xUnit v3 + Shouldly + NSubstitute on Microsoft.Testing.Platform (**accepted**, S0-2) |
+| ADR-001 | UI library | OpenVue (PrimeVue fork), unstyled + Tailwind. Spike in S0 confirms package name, version and unstyled mode; fall back to the in-house PrimeVue fork if not viable |
+| ADR-002 | Package manager | pnpm |
+| ADR-003 | Test framework | xUnit v3 + Shouldly + NSubstitute |
 | ADR-004 | Identity | ASP.NET Core Identity, external login only |
 | ADR-005 | Migrations in production | `Crm.Migrator` run by the deployment identity (not bundles) |
 | ADR-006 | Search | SQL `LIKE` over normalised columns for MVP; evaluate full-text in S7 |
 | ADR-007 | PDF generation (quotes) | Decide in S14; check licence terms first |
 | ADR-008 | AI providers in production | Azure OpenAI (AU region); direct APIs development-only |
 | ADR-009 | Mediator library | None; small in-house dispatcher |
-| ADR-010 | Package versions | Central package management; versions from the feed, logged with date (**accepted**, S0-2) |
-| ADR-011 | API access defaults | Deny by default; open only via named `HostPolicies`; anonymous unknown routes get 401 (**accepted**, S0-4) |

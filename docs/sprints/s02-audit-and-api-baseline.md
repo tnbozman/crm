@@ -63,7 +63,7 @@ Tests first:
 - `Rate_Limit_Returns429` (per-user limiter).
 - OpenAPI snapshot test: contract changes show up in review.
 
-Implement: shared endpoint filters, validation helpers, paging contract, ETag handling, rate limiter, OpenAPI polish, regenerate TS client.
+Implement: exception filter mapping typed exceptions (`NotFoundException`, `ConflictException`, `ValidationException`, `ForbiddenException`) to problem details, validation filter, paging contract (`PagedResult<T>` DTO), ETag handling, rate limiter, OpenAPI polish, regenerate TS client. Add a base `CrmControllerBase` with route and policy conventions, and an architecture test that all controllers derive from it.
 
 ### S2-6 Health, readiness and alerts hook (E37)
 

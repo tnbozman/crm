@@ -46,7 +46,7 @@ Rules:
 - Never write production code without a failing test that requires it. Never edit a test to make it pass unless the requirement changed (say so explicitly).
 - One behaviour per test. Name tests `Method_Scenario_ExpectedResult` (C#) or `it('does X when Y')` (TS).
 - Do not mock the database. Persistence and API tests use real SQL Server through the fixtures in `Crm.Platform.Testing`. Mock only true external boundaries (Graph, finance system, AI providers).
-- Test pyramid per module: domain unit tests (no I/O) → application/handler tests → persistence tests (real SQL, own schema) → API tests (`WebApplicationFactory`, fake auth) → a few Playwright journeys.
+- Test pyramid per module: model and mapper unit tests (no I/O) → service tests (real SQL, own schema) → controller tests through `WebApplicationFactory` with fake auth → a few Playwright journeys. Mock a service only when testing a controller's HTTP behaviour in isolation is clearer; prefer end-to-end HTTP tests.
 - Every module has a migrations test: migrations apply to an empty database, and `HasPendingModelChanges()` is false.
 - Every permission rule has a negative test (the user who must not see or do it).
 - Every story ends with the *Done when* list in its sprint file satisfied and `make verify` green.
@@ -60,7 +60,19 @@ Rules:
 - Synchronous calls through Contracts interfaces. Asynchronous changes through integration events and the transactional outbox. No distributed transactions.
 - Reporting and search read projections built from events.
 - The runtime identity never runs migrations. `Crm.Migrator` applies them with the deployment identity.
-- Each module registers itself through `IModule` (services, endpoints, DbContext, migrations, AI tools and skills).
+- Each module registers itself through `IModule` (services, controllers assembly, DbContext, migrations, AI tools and skills).
+
+## Layering rules (enforced by architecture tests)
+
+- **Controller → Service → DbContext/Models.** Controllers accept and return DTOs only; they never reference `DbContext` or Models and hold no business logic.
+- **Services** hold business rules and transactions, are registered by interface, never reference `HttpContext` or ASP.NET MVC types, and never return Models to controllers (they return DTOs or Contracts DTOs).
+- **Models** (EF entities) are `internal` to the module, enforce invariants through methods with private setters, and are never serialised or exposed.
+- **DTOs** are records in `Dtos/`; request DTOs are validated at the boundary; response DTOs never contain masked fields.
+- **Mapping** is explicit code in `Mapping/`; no reflection-based mapper unless an ADR approves one.
+- **No generic repository or unit-of-work wrapper.** Use the module `DbContext` in services.
+- Errors are thrown as typed exceptions from services and converted to problem details by the platform filter; controllers have no try/catch.
+- Controllers: `[ApiController]`, attribute routes `api/v1/<module>/<resource>`, `[Authorize(Policy=...)]`, `CancellationToken`, `[ProducesResponseType]`.
+- One controller per resource, one service per aggregate or use-case cluster; split a service that grows past ~300 lines.
 - Frontend feature folders mirror modules: `src/web/src/features/<module>/`.
 
 ## Security rules
