@@ -28,4 +28,6 @@ internal static class FixtureModules
 {
     public static IReadOnlyList<ModuleUnderTest> All { get; } =
         [ModuleUnderTest.From(new Fixture.Sample.SampleModule()), ModuleUnderTest.From(new Fixture.Rogue.RogueModule())];
+
+    public static IReadOnlyList<Assembly> Implementations { get; } = All.Select(m => m.Implementation).ToList();
 }

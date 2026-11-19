@@ -1,8 +1,8 @@
-using Fixture.Sample.Contracts;
+using Fixture.Sample.Dtos;
 
 namespace Fixture.Sample.Services;
 
 internal interface ISampleService
 {
-    SampleSummary Get(Guid sampleId);
+    SampleResponse Get(Guid sampleId);
 }

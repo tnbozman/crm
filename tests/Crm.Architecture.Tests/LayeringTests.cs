@@ -20,6 +20,10 @@ public sealed class LayeringTests
         LayeringRules.ControllersReferencingDbContextOrModels(CrmAssemblies.All).ShouldBeEmpty("controllers use services and DTOs, never DbContext or Models");
 
     [Fact]
+    public void Controllers_DoNotReference_DbContextOrModels_FlagsRogueOnly() =>
+        LayeringRules.ControllersReferencingDbContextOrModels(FixtureModules.Implementations).ShouldBe(["Fixture.Rogue.Controllers.RoguesController"]);
+
+    [Fact]
     public void Services_DoNotReference_HttpContextOrMvcTypes() =>
         LayeringRules.ServicesReferencingHttpContextOrMvc(CrmAssemblies.All).ShouldBeEmpty("services hold business rules and never touch HTTP or MVC types");
 
