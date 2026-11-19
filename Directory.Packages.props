@@ -1,0 +1,14 @@
+<Project>
+
+  <!-- Central package versions. Query the feed for the latest stable before adding or bumping
+       with "dotnet package search", exact match. Baseline recorded in docs/adr/0010-package-baseline.md. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup Label="Testing">
+    <PackageVersion Include="Shouldly" Version="4.3.0" />
+    <PackageVersion Include="xunit.v3" Version="4.0.3" />
+  </ItemGroup>
+
+</Project>
