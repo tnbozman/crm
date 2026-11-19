@@ -5,13 +5,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Crm.Platform.Tests;
 
-internal sealed class TestModule(string name) : IModule
+internal sealed class TestModule(string name, Assembly? controllersAssembly = null) : IModule
 {
     public string Name { get; } = name;
 
-    public Assembly ControllersAssembly => typeof(TestModule).Assembly;
+    public Assembly ControllersAssembly { get; } = controllersAssembly ?? typeof(TestModule).Assembly;
 
-    public void AddServices(IServiceCollection services, IConfiguration configuration)
-    {
-    }
+    public void AddServices(IServiceCollection services, IConfiguration configuration) =>
+        services.AddSingleton(new TestModuleMarker(Name));
 }
+
+internal sealed record TestModuleMarker(string ModuleName);
