@@ -64,6 +64,7 @@ test-e2e:        ## Playwright journeys against the built host
 test: test-unit test-int test-arch test-web   ## everything except e2e
 
 lint: format-check   ## C# format check, ESLint, Prettier check, vue-tsc
+	@bash scripts/checks/make-targets.sh
 	$(call todo,S0-5,ESLint and vue-tsc join make lint with the Vue app)
 
 format:          ## apply formatting
