@@ -14,4 +14,16 @@ public sealed class ModuleRegistryTests
 
         exception.Message.ShouldContain("Directory");
     }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("directory")]
+    [InlineData("Deal-Roles")]
+    [InlineData("Access2")]
+    public void Constructor_NameNotPascalCaseLetters_Throws(string name)
+    {
+        var exception = Should.Throw<InvalidOperationException>(() => new ModuleRegistry([new TestModule(name)]));
+
+        exception.Message.ShouldContain("PascalCase");
+    }
 }
