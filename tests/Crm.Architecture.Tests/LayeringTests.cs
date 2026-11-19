@@ -24,6 +24,15 @@ public sealed class LayeringTests
         LayeringRules.ControllersReferencingDbContextOrModels(FixtureModules.Implementations).ShouldBe(["Fixture.Rogue.Controllers.RoguesController"]);
 
     [Fact]
+    public void Controllers_OnlyDependOnServiceInterfacesAndDtos() =>
+        LayeringRules.ControllerDependenciesOtherThanServiceInterfacesAndDtos(CrmAssemblies.All).ShouldBeEmpty();
+
+    [Fact]
+    public void Controllers_OnlyDependOnServiceInterfacesAndDtos_FlagsRogueOnly() =>
+        LayeringRules.ControllerDependenciesOtherThanServiceInterfacesAndDtos(FixtureModules.Implementations).ShouldBe(
+            ["Fixture.Rogue.Controllers.RoguesController depends on Fixture.Rogue.Services.RogueService"]);
+
+    [Fact]
     public void Services_DoNotReference_HttpContextOrMvcTypes() =>
         LayeringRules.ServicesReferencingHttpContextOrMvc(CrmAssemblies.All).ShouldBeEmpty("services hold business rules and never touch HTTP or MVC types");
 

@@ -1,6 +1,7 @@
 using Fixture.Rogue.Dtos;
 using Fixture.Rogue.Models;
 using Fixture.Rogue.Persistence;
+using Fixture.Rogue.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,8 +10,13 @@ namespace Fixture.Rogue.Controllers;
 
 [ApiController]
 [Route("api/v1/rogue/rogues")]
-internal sealed class RoguesController : ControllerBase
+internal sealed class RoguesController(RogueService service) : ControllerBase
 {
+    /// <summary>Violation: a controller depending on a concrete service, not its interface.</summary>
+    [HttpGet]
+    [ProducesResponseType<string>(StatusCodes.Status200OK)]
+    public ActionResult<string> Describe() => service.Describe();
+
     /// <summary>Violation: a controller reaching the DbContext and a Model.</summary>
     [HttpGet("{id:guid}")]
     [ProducesResponseType<RogueResponse>(StatusCodes.Status200OK)]

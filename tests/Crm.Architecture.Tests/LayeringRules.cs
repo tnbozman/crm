@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Microsoft.AspNetCore.Mvc;
 using NetArchTest.Rules;
 
 namespace Crm.Architecture.Tests;
@@ -18,6 +19,39 @@ internal static class LayeringRules
             .That().ResideInNamespaceEndingWith(".Services")
             .ShouldNot().HaveDependencyOnAny("Microsoft.AspNetCore.Http", "Microsoft.AspNetCore.Mvc")
             .GetResult());
+
+    /// <summary>
+    /// Controllers take service interfaces (their module's Services, or Crm.Platform such as ICurrentUser) in their
+    /// constructors, and DTOs or framework types (Guid, CancellationToken, ...) as action parameters.
+    /// </summary>
+    public static IReadOnlyList<string> ControllerDependenciesOtherThanServiceInterfacesAndDtos(IReadOnlyList<Assembly> assemblies)
+    {
+        var controllers = assemblies.SelectMany(a => a.GetTypes())
+            .Where(t => typeof(ControllerBase).IsAssignableFrom(t) && !t.IsAbstract)
+            .ToList();
+
+        var constructorProblems = controllers
+            .SelectMany(c => c.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                .SelectMany(ctor => ctor.GetParameters())
+                .Select(p => p.ParameterType)
+                .Where(t => !(t.IsInterface && (InNamespace(t, ".Services") || t.Assembly.GetName().Name == "Crm.Platform")))
+                .Select(t => $"{c.FullName} depends on {t.FullName}"));
+
+        var actionProblems = controllers
+            .SelectMany(c => c.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                .Where(m => !m.IsSpecialName)
+                .SelectMany(m => m.GetParameters().SelectMany(p => Unwrap(p.ParameterType))
+                    .Where(t => !InNamespace(t, ".Dtos") && !IsFrameworkType(t))
+                    .Select(t => $"{c.FullName}.{m.Name} takes {t.FullName}")));
+
+        return [.. constructorProblems.Concat(actionProblems).Distinct(StringComparer.Ordinal)];
+    }
+
+    private static bool IsFrameworkType(Type type)
+    {
+        var assembly = type.Assembly.GetName().Name ?? string.Empty;
+        return assembly.StartsWith("System", StringComparison.Ordinal) || assembly.StartsWith("Microsoft.", StringComparison.Ordinal);
+    }
 
     public static IReadOnlyList<string> DtosReferencingModels(IReadOnlyList<Assembly> assemblies)
     {
