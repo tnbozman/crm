@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using Crm.Platform.Modules;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -107,5 +108,32 @@ internal static class ModuleRules
         }
 
         return violations;
+    }
+
+    /// <summary>Each module has exactly one DbContext, and its default schema is the module schema.</summary>
+    public static IReadOnlyList<string> DbContextProblems(IReadOnlyList<ModuleUnderTest> modules)
+    {
+        var problems = new List<string>();
+
+        foreach (var module in modules)
+        {
+            var contexts = module.Implementation.GetTypes()
+                .Where(t => typeof(DbContext).IsAssignableFrom(t) && !t.IsAbstract)
+                .OrderBy(t => t.Name, StringComparer.Ordinal)
+                .ToList();
+
+            if (contexts.Count != 1)
+            {
+                problems.Add($"{module.Name} has {contexts.Count} DbContexts: {string.Join(", ", contexts.Select(t => t.Name))}");
+            }
+
+            var expected = module.Module.Schema();
+            problems.AddRange(contexts
+                .Select(t => (Type: t, Schema: DbContextModels.Load(t).GetDefaultSchema()))
+                .Where(x => x.Schema != expected)
+                .Select(x => $"{x.Type.FullName} has default schema '{x.Schema}', expected '{expected}'"));
+        }
+
+        return problems;
     }
 }

@@ -51,4 +51,17 @@ public sealed class ModuleBoundaryTests
     [Fact]
     public void Modules_DoNotResolve_OtherModulesServices_FlagsRogueOnly() =>
         ModuleRules.RegistrationsOfOtherModulesTypes(FixtureModules.All).ShouldBe(["Rogue registers Fixture.Sample.SampleModule"]);
+
+    [Fact]
+    public void EachModule_HasOneDbContext_WithDefaultSchemaEqualToModuleSchema() =>
+        ModuleRules.DbContextProblems(ShippedModules.All).ShouldBeEmpty();
+
+    [Fact]
+    public void EachModule_HasOneDbContext_WithDefaultSchemaEqualToModuleSchema_FlagsRogueOnly() =>
+        ModuleRules.DbContextProblems(FixtureModules.All).ShouldBe(
+            [
+                "Rogue has 2 DbContexts: RogueDbContext, RogueReportingDbContext",
+                "Fixture.Rogue.Persistence.RogueReportingDbContext has default schema 'reporting', expected 'rogue'",
+            ],
+            ignoreOrder: true);
 }
