@@ -7,10 +7,9 @@
     <Project Path="src/Crm.SharedKernel/Crm.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/tests/fixtures/">
-    <Project Path="tests/Fixtures/Modules/Rogue/Fixture.Rogue.Contracts/Fixture.Rogue.Contracts.csproj" />
-    <Project Path="tests/Fixtures/Modules/Rogue/Fixture.Rogue/Fixture.Rogue.csproj" />
-    <Project Path="tests/Fixtures/Modules/Sample/Fixture.Sample.Contracts/Fixture.Sample.Contracts.csproj" />
-    <Project Path="tests/Fixtures/Modules/Sample/Fixture.Sample/Fixture.Sample.csproj" />
+    <Project Path="tests/Fixtures/Fixture.Contracts/Fixture.Contracts.csproj" />
+    <Project Path="tests/Fixtures/Modules/Fixture.Rogue/Fixture.Rogue.csproj" />
+    <Project Path="tests/Fixtures/Modules/Fixture.Sample/Fixture.Sample.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Crm.Architecture.Tests/Crm.Architecture.Tests.csproj" />

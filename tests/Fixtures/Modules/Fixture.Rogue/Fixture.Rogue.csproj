@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\Crm.SharedKernel\Crm.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Crm.Mediator\Crm.Mediator.csproj" />
+    <ProjectReference Include="..\..\Fixture.Contracts\Fixture.Contracts.csproj" />
+  </ItemGroup>
+
+  <!-- Violation: a module project referencing another module. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Fixture.Sample\Fixture.Sample.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,5 +1,5 @@
 using Crm.Mediator;
 
-namespace Fixture.Sample.Contracts;
+namespace Fixture.Contracts.Sample;
 
 public sealed record GetSampleSummary(Guid SampleId) : IQuery<SampleSummary>;

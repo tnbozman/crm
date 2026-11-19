@@ -1,4 +1,4 @@
-namespace Fixture.Rogue.Contracts;
+namespace Fixture.Contracts.Rogue;
 
 /// <summary>Violation: a class with behaviour in Contracts.</summary>
 public sealed class RogueCalculator

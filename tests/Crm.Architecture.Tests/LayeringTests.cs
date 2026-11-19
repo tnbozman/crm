@@ -68,7 +68,7 @@ public sealed class LayeringTests
     [Fact]
     public void Controllers_HaveNoTryCatch_FlagsRogueOnly() =>
         LayeringRules.ControllerFilesWithTryCatch(FixtureModules.Implementations).ShouldBe(
-            ["tests/Fixtures/Modules/Rogue/Fixture.Rogue/Controllers/RoguesController.cs"]);
+            ["tests/Fixtures/Modules/Fixture.Rogue/Controllers/RoguesController.cs"]);
 
     [Fact]
     public void Dtos_DoNotReference_Models() =>
@@ -85,7 +85,7 @@ public sealed class LayeringTests
     [Fact]
     public void ModuleFolders_Follow_ControllersServicesDtosModelsPersistenceHandlers_FlagsRogueOnly() =>
         LayeringRules.ModuleFoldersOutsideTheLayout(FixtureModules.Implementations).ShouldBe(
-            ["tests/Fixtures/Modules/Rogue/Fixture.Rogue/Helpers"]);
+            ["tests/Fixtures/Modules/Fixture.Rogue/Helpers"]);
 
     [Fact]
     public void Controllers_ReturnOnlyDtoTypes()

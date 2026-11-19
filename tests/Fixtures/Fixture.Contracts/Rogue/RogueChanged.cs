@@ -1,5 +1,5 @@
 using Crm.Mediator;
 
-namespace Fixture.Rogue.Contracts;
+namespace Fixture.Contracts.Rogue;
 
 public sealed record RogueChanged(Guid RogueId) : IIntegrationEvent;

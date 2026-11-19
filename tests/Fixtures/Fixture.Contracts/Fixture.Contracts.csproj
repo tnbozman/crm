@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Test-only stand-in for Crm.Mediator.Contracts: the fixture modules' messages, one namespace per module. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Crm.Mediator\Crm.Mediator.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,5 +1,5 @@
 using Crm.Mediator;
-using Fixture.Rogue.Contracts;
+using Fixture.Contracts.Rogue;
 
 namespace Fixture.Rogue.Services;
 

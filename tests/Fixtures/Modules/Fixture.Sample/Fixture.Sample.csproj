@@ -13,9 +13,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\src\Crm.SharedKernel\Crm.SharedKernel.csproj" />
-    <ProjectReference Include="..\..\..\..\..\src\Crm.Mediator\Crm.Mediator.csproj" />
-    <ProjectReference Include="..\Fixture.Sample.Contracts\Fixture.Sample.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Crm.SharedKernel\Crm.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Crm.Mediator\Crm.Mediator.csproj" />
+    <ProjectReference Include="..\..\Fixture.Contracts\Fixture.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

@@ -23,8 +23,8 @@
 
   <!-- Test-only modules the module rules are proven against (tests/Fixtures/README.md). -->
   <ItemGroup>
-    <ProjectReference Include="..\Fixtures\Modules\Sample\Fixture.Sample\Fixture.Sample.csproj" />
-    <ProjectReference Include="..\Fixtures\Modules\Rogue\Fixture.Rogue\Fixture.Rogue.csproj" />
+    <ProjectReference Include="..\Fixtures\Modules\Fixture.Sample\Fixture.Sample.csproj" />
+    <ProjectReference Include="..\Fixtures\Modules\Fixture.Rogue\Fixture.Rogue.csproj" />
   </ItemGroup>
 
 </Project>

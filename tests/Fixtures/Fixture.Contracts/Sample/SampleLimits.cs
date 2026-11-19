@@ -1,4 +1,4 @@
-namespace Fixture.Sample.Contracts;
+namespace Fixture.Contracts.Sample;
 
 public static class SampleLimits
 {
