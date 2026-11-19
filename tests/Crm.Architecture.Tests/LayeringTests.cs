@@ -71,6 +71,15 @@ public sealed class LayeringTests
         LayeringRules.DtosReferencingModels(FixtureModules.Implementations).ShouldBe(["Fixture.Rogue.Dtos.RogueResponse"]);
 
     [Fact]
+    public void ModuleFolders_Follow_ControllersServicesDtosModelsPersistenceHandlers() =>
+        LayeringRules.ModuleFoldersOutsideTheLayout([.. ShippedModules.All.Select(m => m.Implementation)]).ShouldBeEmpty();
+
+    [Fact]
+    public void ModuleFolders_Follow_ControllersServicesDtosModelsPersistenceHandlers_FlagsRogueOnly() =>
+        LayeringRules.ModuleFoldersOutsideTheLayout(FixtureModules.Implementations).ShouldBe(
+            ["tests/Fixtures/Modules/Rogue/Fixture.Rogue/Helpers"]);
+
+    [Fact]
     public void Controllers_ReturnOnlyDtoTypes()
     {
         var offenders = CrmAssemblies.All

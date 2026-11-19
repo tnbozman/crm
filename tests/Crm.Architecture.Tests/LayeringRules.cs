@@ -72,6 +72,22 @@ internal static partial class LayeringRules
     [GeneratedRegex(@"//[^\n]*|/\*.*?\*/", RegexOptions.Singleline)]
     private static partial Regex Comments();
 
+    private static readonly HashSet<string> ModuleLayout = new(StringComparer.Ordinal)
+    {
+        "Controllers", "Services", "Dtos", "Models", "Persistence", "Mapping", "Validation", "Handlers", "Skills",
+        "Properties", "bin", "obj",
+    };
+
+    /// <summary>Top-level folders of a module implementation project that are not in the module layout (docs/architecture.md §1).</summary>
+    public static IReadOnlyList<string> ModuleFoldersOutsideTheLayout(IReadOnlyList<Assembly> moduleImplementations) =>
+        moduleImplementations
+            .Select(ProjectSources.DirectoryOf)
+            .SelectMany(Directory.EnumerateDirectories)
+            .Where(folder => !ModuleLayout.Contains(Path.GetFileName(folder)))
+            .Select(ProjectSources.Relative)
+            .Order(StringComparer.Ordinal)
+            .ToList();
+
     public static IReadOnlyList<string> DtosReferencingModels(IReadOnlyList<Assembly> assemblies)
     {
         var models = NamespacesEndingWith(assemblies, ".Models");
