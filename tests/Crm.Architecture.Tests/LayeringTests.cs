@@ -28,6 +28,10 @@ public sealed class LayeringTests
         LayeringRules.ServicesReferencingHttpContextOrMvc(CrmAssemblies.All).ShouldBeEmpty("services hold business rules and never touch HTTP or MVC types");
 
     [Fact]
+    public void Services_DoNotReference_HttpContextOrMvcTypes_FlagsRogueOnly() =>
+        LayeringRules.ServicesReferencingHttpContextOrMvc(FixtureModules.Implementations).ShouldBe(["Fixture.Rogue.Services.RogueAuditService"]);
+
+    [Fact]
     public void Models_AreInternalAndNotUsedInDtosOrControllerSignatures() =>
         LayeringRules.PublicModels(CrmAssemblies.All).ShouldBeEmpty("EF models never leave their module");
 
