@@ -57,6 +57,15 @@ internal sealed class RequestInvoker<TRequest, TResponse> : RequestInvoker<TResp
     {
         var handler = services.GetService<IRequestHandler<TRequest, TResponse>>()
             ?? throw new InvalidOperationException($"No handler is registered for request {typeof(TRequest).FullName}.");
-        return handler.Handle((TRequest)request, cancellationToken);
+        var typedRequest = (TRequest)request;
+
+        Func<Task<TResponse>> next = () => handler.Handle(typedRequest, cancellationToken);
+        foreach (var behaviour in services.GetServices<IRequestBehaviour>().Reverse())
+        {
+            var inner = next;
+            next = () => behaviour.Handle(typedRequest, inner, cancellationToken);
+        }
+
+        return next();
     }
 }
