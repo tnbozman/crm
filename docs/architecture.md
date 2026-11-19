@@ -124,7 +124,7 @@ The SQL fixture reads `CRM_SQL_SERVER` (devcontainer: the `db` service; CI: serv
 | # | Decision | Default in this plan |
 | --- | --- | --- |
 | ADR-001 | UI library | OpenVue (PrimeVue fork), unstyled + Tailwind. Spike in S0 confirms package name, version and unstyled mode; fall back to the in-house PrimeVue fork if not viable |
-| ADR-002 | Package manager | pnpm |
+| ADR-002 | Package manager | pnpm, exact pins, release-age policy kept on (**accepted**, S0-5) |
 | ADR-003 | Test framework | xUnit v3 + Shouldly + NSubstitute on Microsoft.Testing.Platform (**accepted**, S0-2) |
 | ADR-004 | Identity | ASP.NET Core Identity, external login only |
 | ADR-005 | Migrations in production | `Crm.Migrator` run by the deployment identity (not bundles) |

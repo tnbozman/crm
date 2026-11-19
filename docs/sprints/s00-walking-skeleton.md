@@ -72,7 +72,7 @@ Done when: tests green; OpenAPI file emitted by `make api-client`.
 
 Evidence: [docs/evidence/s00/S0-4-host-health.md](../evidence/s00/S0-4-host-health.md). Note for S0-7: anonymous requests to unknown `/api` routes get 401 by design, so the unknown-route test must use a signed-in client.
 
-### S0-5 Vue 3 app and tooling (E46)
+### ✅ S0-5 Vue 3 app and tooling (E46)
 
 Tests first (Vitest + Testing Library + MSW):
 - `App shows the health status returned by the API`.
@@ -82,6 +82,8 @@ Tests first (Vitest + Testing Library + MSW):
 Implement: Vite + Vue 3 + TypeScript strict, Pinia, Vue Router, Tailwind CSS, ESLint flat config, Prettier (+ Tailwind plugin), `vue-tsc`, Vitest, MSW, generated API types from OpenAPI, a typed `apiFetch` wrapper.
 
 Done when: `pnpm lint`, `format:check`, `typecheck`, `test --run`, `build` all pass; `make api-client-check` passes.
+
+Evidence: [docs/evidence/s00/S0-5-vue-app.md](../evidence/s00/S0-5-vue-app.md); ADR-002 (pnpm and release-age policy); npm baseline in ADR-010.
 
 ### S0-6 OpenVue spike and UI foundation (E46, ADR-001)
 

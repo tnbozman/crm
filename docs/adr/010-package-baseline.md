@@ -27,4 +27,27 @@ Also pinned outside `Directory.Packages.props`:
 | 2026-11-19 | .NET SDK | 10.0.100, `rollForward: latestFeature` (10.0.404 installed) | `global.json` |
 | 2026-11-19 | dotnet-ef, reportgenerator | 10.0.8, 5.5.10 | `.config/dotnet-tools.json` (S0-1) |
 
+### npm (`src/web/package.json`, ADR-002)
+
+Queried with `pnpm view <pkg> version` on 2026-11-19. Each version is the latest stable that has cleared pnpm's release-age window, unless noted. Story: S0-5.
+
+| Package | Version | Note |
+| --- | --- | --- |
+| vue / pinia / vue-router | 3.5.45 / 4.1.0 / 5.5.1 | |
+| vite / @vitejs/plugin-vue | 8.3.8 / 6.0.11 | |
+| typescript | 6.0.3 | 7.0.2 is the latest, but typescript-eslint 8.73 supports TypeScript below 6.1.0 only. 6.0.3 is the newest in range; openapi-typescript (peer ^5) was checked to work with it |
+| vue-tsc / @vue/tsconfig / @types/node | 3.3.14 / 0.9.1 / 26.6.6 | |
+| tailwindcss / @tailwindcss/vite | 4.3.5 / 4.3.5 | eslint-plugin-tailwindcss not added: it does not support Tailwind 4 |
+| vitest | 5.1.0 | 5.1.1 was inside the release-age window |
+| jsdom | 31.0.1 | |
+| @testing-library/vue | 8.1.0 | |
+| @testing-library/jest-dom | 7.0.1 | 8.0.0 was inside the release-age window |
+| msw | 3.0.7 | v3 option is `onUnhandledFrame` (was `onUnhandledRequest`) |
+| axe-core | 4.14.1 | used directly; `vitest-axe` 0.1.0 (2022) looks unmaintained |
+| openapi-typescript | 7.13.0 | |
+| eslint / eslint-plugin-vue | 10.15.0 / 10.12.1 | |
+| @vue/eslint-config-typescript / @vue/eslint-config-prettier | 14.9.0 / 10.2.0 | |
+| prettier / prettier-plugin-tailwindcss | 3.10.1 / 0.8.1 | |
+| jiti | 2.7.0 | loads `eslint.config.ts` |
+
 Considered and not adopted: `Microsoft.NET.Test.Sdk` 18.12.0 and `xunit.runner.visualstudio` 4.0.1, which only VSTest needs (see ADR-003).
