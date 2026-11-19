@@ -22,6 +22,16 @@ public sealed class PipelineTests
 
         provider.GetRequiredService<Trace>().ShouldBe(["outer before", "inner before", "handler", "inner after", "outer after"]);
     }
+
+    [Fact]
+    public async Task Pipeline_RunsInOrder_CorrelationLoggingValidationAuthorisation()
+    {
+        await using var provider = MediatorServices.Create().BuildServiceProvider();
+        await using var scope = provider.CreateAsyncScope();
+
+        scope.ServiceProvider.GetServices<IRequestBehaviour>().Select(b => b.GetType().Name).ShouldBe(
+            ["CorrelationBehaviour", "LoggingBehaviour", "ValidationBehaviour", "AuthorisationBehaviour"]);
+    }
 }
 
 internal sealed class Trace : List<string>;
