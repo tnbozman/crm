@@ -1,0 +1,19 @@
+{
+  "recommendations": [
+    "ms-dotnettools.csdevkit",
+    "ms-dotnettools.csharp",
+    "ms-mssql.mssql",
+    "Vue.volar",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "vitest.explorer",
+    "ms-playwright.playwright",
+    "editorconfig.editorconfig",
+    "ms-vscode.makefile-tools",
+    "ms-azuretools.vscode-bicep",
+    "redhat.vscode-yaml",
+    "GitHub.vscode-github-actions",
+    "Anthropic.claude-code"
+  ]
+}

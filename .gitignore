@@ -1,0 +1,57 @@
+# .NET build outputs
+**/bin/
+**/obj/
+artifacts/
+
+# User-specific files
+*.user
+*.suo
+.vs/
+*.userprefs
+
+# NuGet
+*.nupkg
+*.nuspec
+!Directory.Packages.props
+packages/
+nuget.dgspec.json
+
+# dotnet user secrets
+**/secrets.json
+
+# Frontend build outputs
+src/Crm.Host/wwwroot/
+src/web/dist/
+src/web/.vite/
+
+# Node
+node_modules/
+.pnpm-store/
+pnpm-debug.log*
+
+# Coverage
+TestResults/
+coverage/
+**/*.cobertura.xml
+**/*.opencover.xml
+
+# Playwright
+**/playwright-report/
+**/test-results/
+
+# VS Code
+.vscode/*.log
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.devcontainer/.env
+
+# Azure Functions
+local.settings.json

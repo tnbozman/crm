@@ -1,0 +1,62 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "make build",
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "silent" },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build-backend",
+      "type": "shell",
+      "command": "make build-backend",
+      "presentation": { "reveal": "silent" },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "test",
+      "type": "shell",
+      "command": "make test",
+      "group": { "kind": "test", "isDefault": true },
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "test-web",
+      "type": "shell",
+      "command": "make test-web",
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "lint",
+      "type": "shell",
+      "command": "make lint",
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "format",
+      "type": "shell",
+      "command": "make format",
+      "presentation": { "reveal": "silent" }
+    },
+    {
+      "label": "web dev",
+      "type": "shell",
+      "command": "make build-backend && pnpm --dir src/web dev",
+      "isBackground": true,
+      "presentation": { "reveal": "silent" },
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "VITE",
+          "endsPattern": "ready in"
+        }
+      }
+    }
+  ]
+}

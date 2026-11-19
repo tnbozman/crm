@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Runs fast checks before each commit. Added to in S0-10.
+set -euo pipefail
+# S0-10 adds: make lint && make test-unit

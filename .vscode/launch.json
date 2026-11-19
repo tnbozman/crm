@@ -1,0 +1,35 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Host (.NET)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Crm.Host/bin/Debug/net10.0/Crm.Host.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Crm.Host",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "preLaunchTask": "build-backend",
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "Now listening on: (https?://\\S+)"
+      }
+    },
+    {
+      "name": "Web (Vue, Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/src/web",
+      "preLaunchTask": "web dev"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full stack",
+      "configurations": ["Host (.NET)", "Web (Vue, Chrome)"]
+    }
+  ]
+}
