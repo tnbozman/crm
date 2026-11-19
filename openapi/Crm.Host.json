@@ -8,13 +8,23 @@
     "/api/v1/health": {
       "get": {
         "tags": [
-          "Crm.Host"
+          "Health"
         ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              },
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              },
+              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HealthResponse"
                 }
@@ -42,7 +52,7 @@
   },
   "tags": [
     {
-      "name": "Crm.Host"
+      "name": "Health"
     }
   ]
 }

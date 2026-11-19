@@ -26,7 +26,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
+                        "text/plain": components["schemas"]["HealthResponse"];
                         "application/json": components["schemas"]["HealthResponse"];
+                        "text/json": components["schemas"]["HealthResponse"];
                     };
                 };
             };

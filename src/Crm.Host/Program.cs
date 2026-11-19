@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
@@ -29,8 +30,9 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapControllers();
+
 var api = app.MapGroup("/api/v1");
-api.MapGet("/health", () => new HealthResponse("ok")).RequireAuthorization(HostPolicies.Anonymous);
 
 foreach (var endpoints in app.Services.GetServices<IApiEndpoints>())
 {
@@ -45,5 +47,3 @@ app.MapFallback("/api/{**path}", () => Results.Problem(statusCode: StatusCodes.S
 app.MapFallbackToFile("index.html").RequireAuthorization(HostPolicies.Anonymous);
 
 app.Run();
-
-internal sealed record HealthResponse(string Status);
