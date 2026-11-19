@@ -124,7 +124,7 @@ Done when: demo step 5 performed and noted in the sprint log.
 
 Evidence: [docs/evidence/s00/S0-8-dev-loop.md](../evidence/s00/S0-8-dev-loop.md). Demo step 5 was performed on 2026-11-19 (see the sprint log).
 
-### S0-9 Test harness (E46)
+### ✅ S0-9 Test harness (E46)
 
 Tests first:
 - `SqlFixture_CreatesIsolatedDatabase_AndDropsIt` (two parallel test classes do not collide).
@@ -135,6 +135,8 @@ Tests first:
 Implement: `Crm.Platform.Testing` with `SqlFixture`, `TestWebAppFactory`, `FakeAuthHandler`, `Builders` with Bogus; test categories `Integration`, `Architecture`, `AiSmoke`.
 
 Done when: `make test-int` runs against the compose database; documented in `docs/testing.md`.
+
+Evidence: [docs/evidence/s00/S0-9-test-harness.md](../evidence/s00/S0-9-test-harness.md); guide in [docs/testing.md](../testing.md). Split into 9a (SQL fixture, Respawn, credentials from the environment), 9b (fake auth, `TestWebAppFactory`, Bogus builders) and 9c (architecture tests) to stay near ~400 lines each. Database per test class instead of per assembly (see evidence). Containers created before this story need a rebuild for `CRM_SQL_PASSWORD`.
 
 ### S0-10 CI, hooks and supply chain (E4, E39)
 
