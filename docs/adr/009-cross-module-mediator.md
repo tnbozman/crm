@@ -21,7 +21,7 @@ That outbox design needed EF Core in `Crm.Platform` (a shared interceptor, share
    - A `SaveChanges` hook writes outbox rows in the same transaction as the change.
    - A hosted relay registered by the module reads only that module's outbox through its own `DbContext`, takes `sp_getapplock` on a per-module resource name, calls `IMediator.Publish`, retries with backoff and dead-letters.
    - A subscriber records the message ID in its own inbox in the same transaction as its own change, so a redelivered message runs once.
-   - The scaffolder (S1-2, extended in S1-3b) generates this code from `scripts/templates/module/`. No project shares it at runtime.
+   - The scaffolder (S1-4, extended in S1-5) generates this code from `scripts/templates/module/`. No project shares it at runtime.
 5. **`Crm.Platform` has no EF Core and no persistence code.** It holds `IMediator`, the message interfaces, the envelope (ID, type, occurred-at, payload JSON, correlation ID, causation ID, originating user ID), the pipeline and handler registration through `IModule`. The S0-9 rule stays unchanged.
 6. **The mediator pipeline is where cross-cutting rules apply to every cross-module call**, in this order: correlation and causation IDs, structured logging (IDs only, never payloads), request validation, authorisation as the current user, and audit of permission-relevant reads (from S2). Queries and commands run in the caller's DI scope, so `ICurrentUser` is the signed-in user. Events published by a relay carry the originating user ID in the envelope; handlers run as the system identity and use that ID for audit only.
 7. **The mediator is written in-house** (about 200 lines: `Send`, `Publish`, the pipeline and handler lookup). No third-party mediator.
@@ -34,8 +34,8 @@ Architecture tests (S1-1 unless noted):
 - `Contracts_Assemblies_ContainOnlyMessagesDtosAndConstants` (no interfaces, no classes with behaviour).
 - `Modules_DoNotResolve_OtherModulesServices`: a module's registered services are internal, so only message types cross the boundary.
 - `Projects_ReferencingEntityFrameworkCore_AreModulesOrMigrator` (S0-9, unchanged).
-- `EachRequest_HasExactlyOneHandler_InOwningModule` (S1-3a), also checked at startup so a missing handler stops the host.
-- `Services_DoNotCall_MediatorPublish` (S1-3a): only a module's relay publishes.
+- `EachRequest_HasExactlyOneHandler_InOwningModule` (S1-3), also checked at startup so a missing handler stops the host.
+- `Services_DoNotCall_MediatorPublish` (S1-3): only a module's relay publishes.
 - `Handlers_DoNotSendInsideATransaction` is a review rule; an automated check is added if a reliable one can be written.
 
 Copied outbox code is kept consistent by:

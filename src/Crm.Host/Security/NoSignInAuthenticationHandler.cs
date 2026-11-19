@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 namespace Crm.Host.Security;
 
 /// <summary>
-/// Placeholder scheme until Entra ID sign-in lands (S1-5): nobody is ever authenticated,
+/// Placeholder scheme until Entra ID sign-in lands (S1-6): nobody is ever authenticated,
 /// and a challenge answers 401. It holds no credentials and accepts no input.
 /// </summary>
 internal sealed class NoSignInAuthenticationHandler(

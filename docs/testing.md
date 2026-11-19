@@ -36,7 +36,7 @@ public sealed class OrganisationServiceTests(SqlFixture sql) : IClassFixture<Sql
 
 - It creates `crm_test_<guid>` on initialise and drops it on dispose. Use **one fixture per test class** (`IClassFixture<SqlFixture>`). Classes then run in parallel without colliding. Respawn would wipe a database shared between parallel classes, so the fixture is per class rather than per assembly.
 - `ResetAsync()` deletes all rows (Respawn), ignores `__EFMigrationsHistory`, and picks up tables created after the fixture started.
-- Migrations are not applied yet: the first module DbContext and `Crm.Migrator` arrive in S1-2, which will add a migrations step to the fixture.
+- Migrations are not applied yet: the first module DbContext and `Crm.Migrator` arrive in S1-4, which will add a migrations step to the fixture.
 - The connection comes from the environment, never from code:
 
 | Variable | Devcontainer | CI (S0-10) |

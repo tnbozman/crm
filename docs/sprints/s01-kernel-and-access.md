@@ -21,14 +21,29 @@ The module system exists and is enforced by tests. A user signs in with Entra ID
 
 ## Stories
 
-**Agreed order (kickoff, 2026-11-19; revised the same day after ADR-009). Stories below are listed in this order:** S1-1 → S1-4 → S1-3a → S1-2 → S1-3b → S1-5 → S1-6 → S1-8 → S1-7 → S1-9.
-- S1-4 comes before S1-3a because the mediator pipeline authorises as the current user (`ICurrentUser`).
-- S1-3a comes before S1-2 because the mediator needs no modules or database, and the scaffolder's templates then generate handlers and their registration from the start.
-- S1-2 comes before S1-3b because each module's outbox, inbox and relay are template code, and their tests need two scaffolded modules with DbContexts and migrations (with the Migrator and the SQL fixture migrations step).
-- S1-8 comes before S1-7 because the frontend's antiforgery header, cookie session and Playwright journeys depend on the server-side headers, cookies and antiforgery.
-- S1-2 and S1-5 are expected to be split (~400-line guideline); S1-3 is already split into S1-3a and S1-3b. S1-9, and possibly S1-7's Playwright work, are the candidates to slip to S2 given reduced Christmas capacity.
-- Decided at kickoff: cross-module communication only through an in-house `IMediator`; Contracts hold only messages; each module owns its outbox, inbox and relay, so `Crm.Platform` stays free of EF Core and the S0-9 rule is unchanged (ADR-009). S1-1, S1-3a and S1-3b below reflect it.
-- Decision still needed: the idle session limit (S1-7, business owner).
+**Agreed order (kickoff, 2026-11-19; revised and renumbered the same day after ADR-009).** Stories are numbered and listed in the order they are built: S1-1 → S1-2 → … → S1-10.
+- S1-2 (current user) comes before S1-3 (mediator) because the mediator pipeline authorises as the current user (`ICurrentUser`).
+- S1-3 (mediator) comes before S1-4 (scaffolder) because the mediator needs no modules or database, and the scaffolder's templates then generate handlers and their registration from the start.
+- S1-4 (scaffolder) comes before S1-5 (module outbox) because each module's outbox, inbox and relay are template code, and their tests need two scaffolded modules with DbContexts and migrations (with the Migrator and the SQL fixture migrations step).
+- S1-8 (security headers) comes before S1-9 (frontend session) because the frontend's antiforgery header, cookie session and Playwright journeys depend on the server-side headers, cookies and antiforgery.
+- S1-4 and S1-6 are expected to be split (~400-line guideline). S1-10, and possibly S1-9's Playwright work, are the candidates to slip to S2 given reduced Christmas capacity.
+- Decided at kickoff: cross-module communication only through an in-house `IMediator`; Contracts hold only messages; each module owns its outbox, inbox and relay, so `Crm.Platform` stays free of EF Core and the S0-9 rule is unchanged (ADR-009). S1-1, S1-3 and S1-5 below reflect it.
+- Decision still needed: the idle session limit (S1-9, business owner).
+
+**Renumbering.** Sprint 0 evidence notes and commits made before the renumbering use the old IDs:
+
+| New | Old | Story |
+| --- | --- | --- |
+| S1-1 | S1-1 | Module contract and architecture tests |
+| S1-2 | S1-4 | Current user and authorisation primitives |
+| S1-3 | S1-3 (first half) | Mediator |
+| S1-4 | S1-2 | Module scaffolder |
+| S1-5 | S1-3 (second half) | Module outbox, inbox and relay |
+| S1-6 | S1-5 | Access module |
+| S1-7 | S1-6 | Dev login |
+| S1-8 | S1-8 | Security headers and session hardening |
+| S1-9 | S1-7 | Frontend session, route guards and shell |
+| S1-10 | S1-9 | Role administration API |
 
 ### S1-1 Module contract and architecture tests (E46)
 
@@ -42,11 +57,11 @@ Tests first (`Crm.Architecture.Tests`):
 - Layering: `Controllers_DoNotReference_DbContextOrModels`, `Controllers_OnlyDependOnServiceInterfacesAndDtos`, `Services_DoNotReference_HttpContextOrMvcTypes`, `Models_AreInternalAndNotUsedInDtosOrControllerSignatures`, `Dtos_DoNotReference_Models`, `Controllers_HaveNoTryCatch` (IL or source scan), `ModuleFolders_Follow_ControllersServicesDtosModelsPersistenceHandlers`.
 - `Host_ModulesList_MatchesModuleProjects`.
 
-Implement: `IModule` (with `ControllersAssembly`, and a hook for registering mediator handlers and the outbox relay, used from S1-3a), `ModuleRegistry`, host composition with `AddApplicationPart`, test helpers to load compiled models.
+Implement: `IModule` (with `ControllersAssembly`, and a hook for registering mediator handlers and the outbox relay, used from S1-3), `ModuleRegistry`, host composition with `AddApplicationPart`, test helpers to load compiled models.
 
 Done when: tests fail before any module exists, pass with the Access module and the sample module.
 
-### S1-4 Current user and authorisation primitives (E2, E36)
+### S1-2 Current user and authorisation primitives (E2, E36)
 
 Tests first:
 - `CurrentUser_FromClaims_ExposesIdRolesTeamsAndBusinessUnits`.
@@ -56,9 +71,9 @@ Tests first:
 
 Implement: `ICurrentUser`, `IUserContext` accessor, role constants (`Admin`, `Sales`, `Delivery`, `Finance`, `Auditor`, `ReadOnly`; refine in R1), policy registration helpers.
 
-### S1-3a Mediator (E46)
+### S1-3 Mediator (E46)
 
-Design: ADR-009. No I/O. Needs `ICurrentUser` from S1-4.
+Design: ADR-009. No I/O. Needs `ICurrentUser` from S1-2.
 
 Tests first (unit, `Crm.Platform`):
 - `Send_Query_InvokesTheSingleHandler_AndReturnsItsResponse`.
@@ -70,19 +85,19 @@ Tests first (unit, `Crm.Platform`):
 
 Implement: in `Crm.Platform` (no EF Core): `IMediator`, `IQuery<T>`, `ICommand<T>`, `IIntegrationEvent`, `IRequestHandler<,>`, `IEventHandler<T>`, pipeline behaviours, handler registration through `IModule`, startup validation of handlers, message envelope (ID, type, occurred-at, payload JSON, correlation ID, causation ID, originating user ID).
 
-Done when: test-assembly handlers answer a query and receive an event through the mediator; pipeline order and the authorisation negative test pass; S1-2's templates can register handlers.
+Done when: test-assembly handlers answer a query and receive an event through the mediator; pipeline order and the authorisation negative test pass; S1-4's templates can register handlers.
 
-### S1-2 Module scaffolder (E46)
+### S1-4 Module scaffolder (E46)
 
 Tests first: `scripts/checks/new-module.sh` runs `make module-new name=Zzz` in a temp copy, then `dotnet build` and `make test-arch` succeed; the generated module has Contracts, implementation, test project, DbContext, initial migration, endpoints stub, `Skills/` folder and web feature folder.
 
-Implement: `scripts/new-module.sh` with templates (Controllers, Services, Dtos, Models, Persistence, Mapping, Validation, Handlers folders each with one example class and tests; handler registration from S1-3a; S1-3b adds the outbox, inbox and relay to Persistence) under `scripts/templates/module/`; adds projects to the solution, host module list and Migrator.
+Implement: `scripts/new-module.sh` with templates (Controllers, Services, Dtos, Models, Persistence, Mapping, Validation, Handlers folders each with one example class and tests; handler registration from S1-3; S1-5 adds the outbox, inbox and relay to Persistence) under `scripts/templates/module/`; adds projects to the solution, host module list and Migrator.
 
-Done when: the scaffolder is used to create Access in S1-5 (dog-food).
+Done when: the scaffolder is used to create Access in S1-6 (dog-food).
 
-### S1-3b Module outbox, inbox and relay (E46)
+### S1-5 Module outbox, inbox and relay (E46)
 
-Design: ADR-009. Each module owns this code, generated from the scaffolder templates (S1-2). Needs two scaffolded modules with migrations.
+Design: ADR-009. Each module owns this code, generated from the scaffolder templates (S1-4). Needs two scaffolded modules with migrations.
 
 Tests first (persistence, real SQL; written once as a conformance suite in `Crm.Platform.Testing` and run by each module's test project against its own `DbContext`):
 - `Outbox_Message_IsWrittenInSameTransactionAsEntityChange` (roll back → no message).
@@ -97,7 +112,7 @@ Implement: in `scripts/templates/module/Persistence/`: outbox and inbox entities
 
 Done when: two sample modules exchange a query and an event through the mediator in an API-level test, with neither referencing the other's implementation.
 
-### S1-5 Access module with ASP.NET Core Identity, external login only (E2)
+### S1-6 Access module with ASP.NET Core Identity, external login only (E2)
 
 Tests first:
 - `FirstExternalSignIn_CreatesUser_WithEntraObjectIdAndNoPasswordHash`.
@@ -112,7 +127,7 @@ Implement: `User` model and `AccessDbContext : IdentityDbContext`, `UsersControl
 
 Done when: tests green; ADR-004 updated with what Identity features are intentionally unused.
 
-### S1-6 Dev login (E2)
+### S1-7 Dev login (E2)
 
 Tests first:
 - `DevLogin_InDevelopmentWithFlag_SignsInSelectedPersona`.
@@ -131,7 +146,7 @@ Tests first (API):
 
 Implement: middleware and Vite-compatible CSP for dev.
 
-### S1-7 Frontend session, route guards and shell (E2, E46)
+### S1-9 Frontend session, route guards and shell (E2, E46)
 
 Tests first (Vitest):
 - `SessionStore_LoadsMe_AndExposesRoles`.
@@ -142,7 +157,7 @@ Tests first (Vitest):
 
 Implement: session Pinia store, guards, app shell with user menu, sign-out, session-expiry handling (idle 15 minutes with warning; confirm limit with business owner).
 
-### S1-9 Role administration API (E2)
+### S1-10 Role administration API (E2)
 
 Tests first: admin can list users and disable a user; non-admin cannot; every change emits an integration event `UserDisabled` (consumed by Audit in S2); optimistic concurrency conflict returns 409.
 
@@ -159,7 +174,7 @@ Stories ticked; `make verify` green; module scaffolder used for Access; architec
 
 ```
 Read CLAUDE.md, docs/architecture.md and docs/sprints/s01-kernel-and-access.md.
-Check entry criteria (is S0 merged and make verify green?). Follow the agreed story order in the Stories section (S1-1, S1-4, S1-3a, S1-2, S1-3b, S1-5, S1-6, S1-8, S1-7, S1-9).
+Check entry criteria (is S0 merged and make verify green?). Follow the agreed story order in the Stories section (S1-1, S1-2, S1-3, S1-4, S1-5, S1-6, S1-7, S1-8, S1-9, S1-10).
 Start with S1-1: restate it, list the first three tests, write the first failing test, run it, then proceed with TDD.
 ```
 

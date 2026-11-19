@@ -12,7 +12,7 @@
 
 - Tests for unknown routes (including S0-7's `Get_UnknownApiRoute_Returns404ProblemDetailsNotHtml`) use a signed-in test client.
 - The `Anonymous` policy is `RequireAssertion(_ => true)`, so authentication middleware still runs for health. That is cheap and harmless.
-- Until Entra ID sign-in (S1-5), the only authentication scheme is `NoSignIn`, which never authenticates and answers 401.
+- Until Entra ID sign-in (S1-6), the only authentication scheme is `NoSignIn`, which never authenticates and answers 401.
 - Test hosts add throwaway endpoints with a test-only controller registered through `AddApplicationPart` (S0-11). Modules register theirs the same way (`IModule` with a controllers assembly, S1-1).
 
 ## Alternatives rejected

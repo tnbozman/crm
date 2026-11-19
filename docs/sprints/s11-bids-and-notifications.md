@@ -77,7 +77,7 @@ Tests first:
 - `Scheduler_OnlyOneInstanceRuns` (applock)
 - `Escalation_AfterOverdueDays_NotifiesManager`
 
-Implement: Platform scheduler hosted service using the lease from S1-3.
+Implement: Platform scheduler hosted service using the lease from S1-5.
 
 Done when: tests green.
 

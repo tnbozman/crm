@@ -68,7 +68,7 @@ test-web:        ## Vitest
 	pnpm --dir $(WEB) test --run
 
 test-e2e:        ## Playwright journeys against the built host
-	$(call todo,S1-7,make test-e2e runs the first Playwright journeys)
+	$(call todo,S1-9,make test-e2e runs the first Playwright journeys)
 
 test: test-unit test-int test-arch test-web   ## everything except e2e
 
@@ -102,16 +102,16 @@ db-up:           ## start the dev database service (run on the Docker host)
 	docker compose -f .devcontainer/docker-compose.yml up -d db
 
 db-reset:        ## drop, recreate and migrate the dev database
-	$(call todo,S1-2,make db-reset needs Crm.Migrator to know the module list)
+	$(call todo,S1-4,make db-reset needs Crm.Migrator to know the module list)
 
 migrate:         ## apply pending migrations
-	$(call todo,S1-2,make migrate needs Crm.Migrator to know the module list)
+	$(call todo,S1-4,make migrate needs Crm.Migrator to know the module list)
 
 migration-add:   ## make migration-add module=Directory name=AddOrganisation
-	$(call todo,S1-2,make migration-add needs the first module DbContext)
+	$(call todo,S1-4,make migration-add needs the first module DbContext)
 
 module-new:      ## scaffold a module: make module-new name=Directory
-	$(call todo,S1-2,make module-new runs scripts/new-module.sh)
+	$(call todo,S1-4,make module-new runs scripts/new-module.sh)
 
 publish:         ## publish the host (includes wwwroot)
 	dotnet publish $(HOST) -c Release -o artifacts/publish

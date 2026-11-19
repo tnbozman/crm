@@ -40,7 +40,7 @@ Statuses: ☐ planned, ◐ in progress, ● implemented with evidence. Update th
 
 | Control theme | Stories |
 | --- | --- |
-| No local passwords | S1-5, S1-6 |
+| No local passwords | S1-6, S1-7 |
 | Insert-only audit | S2-1, S2-2, S3-2 |
 | Log scrubbing | S2-4 |
 | Phishing-resistant MFA and Conditional Access | S3-5 |

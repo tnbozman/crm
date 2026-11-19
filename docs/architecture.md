@@ -157,7 +157,7 @@ Outbox: each module owns `outbox_messages` and `inbox_messages` in its schema, m
 | Frontend unit and component | Vitest, Testing Library, MSW | none |
 | End to end | Playwright (few journeys) | real stack, dev login |
 
-The SQL fixture (`Crm.Platform.Testing.SqlFixture`) reads `CRM_SQL_SERVER`, `CRM_SQL_USER` and `CRM_SQL_PASSWORD` (devcontainer: the `db` service; CI: service container). It creates a uniquely named database **per test class** (so parallel classes cannot collide under Respawn) and resets data with Respawn between tests. From S1-2 it also applies migrations through `Crm.Migrator`. See `docs/testing.md`.
+The SQL fixture (`Crm.Platform.Testing.SqlFixture`) reads `CRM_SQL_SERVER`, `CRM_SQL_USER` and `CRM_SQL_PASSWORD` (devcontainer: the `db` service; CI: service container). It creates a uniquely named database **per test class** (so parallel classes cannot collide under Respawn) and resets data with Respawn between tests. From S1-4 it also applies migrations through `Crm.Migrator`. See `docs/testing.md`.
 
 ## 10. Decisions to confirm (record outcomes in `docs/adr/`)
 
