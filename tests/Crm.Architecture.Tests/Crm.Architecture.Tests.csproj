@@ -7,8 +7,16 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Include="NetArchTest.Rules" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <!-- Production projects under test. Modules are added here as they are created (S1-2 scaffolder). -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Crm.Host\Crm.Host.csproj" />
+    <ProjectReference Include="..\..\src\Crm.Migrator\Crm.Migrator.csproj" />
+    <ProjectReference Include="..\..\src\Crm.Platform\Crm.Platform.csproj" />
   </ItemGroup>
 
 </Project>
