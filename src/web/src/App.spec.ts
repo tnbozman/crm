@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/vue'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
+import { axeViolations } from '@/test/axe'
 import { renderApp } from '@/test/render-app'
 import { server } from '@/test/server'
 
@@ -23,5 +24,14 @@ describe('App', () => {
     await renderApp()
 
     expect(await screen.findByRole('alert')).toHaveTextContent('API status: unavailable')
+  })
+
+  it('has no axe violations', async () => {
+    server.use(http.get('/api/v1/health', () => HttpResponse.json({ status: 'ok' })))
+
+    const { container } = await renderApp()
+    await screen.findByText('API status: ok')
+
+    expect(await axeViolations(container)).toEqual([])
   })
 })
