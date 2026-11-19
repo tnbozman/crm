@@ -27,7 +27,7 @@ doctor:          ## check environment is ready (tools, SQL Server, VS Code confi
 
 setup:           ## restore backend and frontend dependencies
 	dotnet tool restore && dotnet restore $(SLN)
-	$(call todo,S0-5,make setup installs frontend packages with pnpm)
+	pnpm --dir $(WEB) install --frozen-lockfile
 
 hooks:           ## install git hooks
 	git config core.hooksPath .githooks
@@ -39,7 +39,7 @@ build-backend:   ## backend only (skip frontend build)
 	dotnet build $(SLN) -c Debug -p:SkipFrontend=true
 
 build-web:       ## frontend only
-	$(call todo,S0-5,make build-web runs the Vite build)
+	pnpm --dir $(WEB) build
 
 run:             ## run the host serving the built frontend (https://localhost:5001)
 	$(call todo,S0-7,make run serves the built SPA from Crm.Host)
@@ -57,7 +57,7 @@ test-arch:       ## architecture tests
 	$(TEST) --filter-trait "Category=Architecture"
 
 test-web:        ## Vitest
-	$(call todo,S0-5,make test-web runs Vitest once the Vue app exists)
+	pnpm --dir $(WEB) test --run
 
 test-e2e:        ## Playwright journeys against the built host
 	$(call todo,S1-7,make test-e2e runs the first Playwright journeys)
@@ -66,24 +66,25 @@ test: test-unit test-int test-arch test-web   ## everything except e2e
 
 lint: format-check   ## C# format check, ESLint, Prettier check, vue-tsc
 	@bash scripts/checks/make-targets.sh
-	$(call todo,S0-5,ESLint and vue-tsc join make lint with the Vue app)
+	pnpm --dir $(WEB) lint
+	pnpm --dir $(WEB) typecheck
 
 format:          ## apply formatting
 	dotnet format $(SLN)
-	$(call todo,S0-5,Prettier joins make format with the Vue app)
+	pnpm --dir $(WEB) format
 
 format-check:    ## fail if formatting would change files
 	dotnet format $(SLN) --verify-no-changes
-	$(call todo,S0-5,Prettier check joins make format-check with the Vue app)
+	pnpm --dir $(WEB) format:check
 
-api-client:      ## regenerate the OpenAPI document (and TypeScript API types)
+api-client:      ## regenerate the OpenAPI document and TypeScript API types
 	dotnet build $(HOST) -p:SkipFrontend=true -p:GenerateOpenApi=true
 	@jq -e '.paths["/api/v1/health"]' $(OPENAPI) >/dev/null || { echo "api-client: $(OPENAPI) missing or does not describe /api/v1/health" >&2; exit 1; }
-	$(call todo,S0-5,make api-client generates TypeScript types from $(OPENAPI))
+	pnpm --dir $(WEB) api:generate
 
 api-client-check: api-client   ## fail if generated client differs from committed
 	@git diff --exit-code -- $(OPENAPI) || { echo "api-client-check: $(OPENAPI) is stale; run make api-client and commit it" >&2; exit 1; }
-	$(call todo,S0-5,make api-client-check diffs the generated client in $(WEB)/src/api)
+	@git diff --exit-code -- $(WEB)/src/api || { echo "api-client-check: $(WEB)/src/api is stale; run make api-client and commit it" >&2; exit 1; }
 
 db-up:           ## start the dev database service (run on the Docker host)
 	@command -v docker >/dev/null || { echo "db-up: docker is not available here. In the devcontainer the db service is started by docker-compose; check it with make doctor." >&2; exit 1; }
