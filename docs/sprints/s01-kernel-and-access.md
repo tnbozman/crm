@@ -75,7 +75,7 @@ Implement: `ICurrentUser`, `IUserContext` accessor, role constants (`Admin`, `Sa
 
 Evidence: [docs/evidence/s01/S1-2-current-user-and-authorisation.md](../evidence/s01/S1-2-current-user-and-authorisation.md). User IDs are GUIDs; teams and business units are `crm:` claims added by Access. The allow-list also holds the SPA shell and the `/api` catch-all, by ADR-011's design.
 
-### S1-3 Mediator (E46)
+### ✅ S1-3 Mediator (E46)
 
 Design: ADR-009. No I/O. Needs `ICurrentUser` from S1-2.
 
@@ -90,6 +90,8 @@ Tests first (unit, `Crm.Platform`):
 Implement: in `Crm.Platform` (no EF Core): `IMediator`, `IQuery<T>`, `ICommand<T>`, `IIntegrationEvent`, `IRequestHandler<,>`, `IEventHandler<T>`, pipeline behaviours, handler registration through `IModule`, startup validation of handlers, message envelope (ID, type, occurred-at, payload JSON, correlation ID, causation ID, originating user ID).
 
 Done when: test-assembly handlers answer a query and receive an event through the mediator; pipeline order and the authorisation negative test pass; S1-4's templates can register handlers.
+
+Evidence: [docs/evidence/s01/S1-3-mediator.md](../evidence/s01/S1-3-mediator.md); ADR-009 updated. Split into S1-3a (core), S1-3b (pipeline and host) and S1-3c (architecture rules). `Publish` is on a separate `IEventPublisher`; subscribers are `IEventSubscriber<T>`; requests name policies with `[RequiresPolicy]`; `IModule` gained `ContractsAssembly`. Modules register handlers in `AddServices` with `AddRequestHandler<T>()` and `AddEventSubscriber<T>()`.
 
 ### S1-4 Module scaffolder (E46)
 

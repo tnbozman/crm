@@ -110,13 +110,13 @@ public interface IModule
 | --- | --- |
 | Ask another module for data | `IMediator.Send` with the owning module's Contracts query, in-process |
 | Ask another module to do something now | `IMediator.Send` with a Contracts command; its own transaction, idempotent handler, never inside the caller's transaction; prefer events |
-| Tell other modules something changed | Integration event through the module's own outbox; its relay calls `IMediator.Publish` after the commit |
+| Tell other modules something changed | Integration event through the module's own outbox; its relay calls `IEventPublisher.Publish` after the commit |
 | Cross-module screen (for example organisation overview) | Composition in `Crm.Host` sending several Contracts queries; never a cross-schema join |
 | Cross-module consistency | Eventual, through events with idempotent handlers (inbox table per subscriber) |
 
 There is no other channel between modules: no injected services from another module, no shared persistence code (ADR-009).
 
-Mediator: `IMediator` in `Crm.Platform` is written in-house. Every `Send` and `Publish` runs a pipeline: correlation and causation IDs, structured logging (IDs only), validation, authorisation as the current user, and audit of permission-relevant reads (S2). Each request type has exactly one handler, in the module that owns it; startup fails otherwise.
+Mediator: `IMediator` (`Send`) and `IEventPublisher` (`Publish`) in `Crm.Platform.Messaging`, written in-house. Every `Send` runs a pipeline: correlation, structured logging (type and correlation ID only), validation of the request's data annotations, authorisation as the current user (`[RequiresPolicy]`, otherwise signed in), and audit of permission-relevant reads (S2). `Publish` sets correlation and causation from the envelope. Modules register handlers in `IModule.AddServices` with `AddRequestHandler<T>()` and `AddEventSubscriber<T>()`. Each request type has exactly one handler, in the module that owns it; startup fails otherwise.
 
 Outbox: each module owns `outbox_messages` and `inbox_messages` in its schema, mapped in its own `DbContext`. Outbox rows are written by a `SaveChanges` hook in the same transaction as the change. A hosted relay registered by the module reads only its own outbox, takes `sp_getapplock` on a per-module resource so one instance relays, calls `IMediator.Publish`, retries with backoff, dead-letters, and marks messages done. Subscribers record processed message IDs in their own inbox in the same transaction as their change. The scaffolder generates this code; a conformance suite in `Crm.Platform.Testing` and a drift check in `make verify` keep the copies identical.
 
