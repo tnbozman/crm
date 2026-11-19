@@ -37,6 +37,13 @@ foreach (var endpoints in app.Services.GetServices<IApiEndpoints>())
     endpoints.Map(api);
 }
 
+// Unknown /api routes never fall through to the SPA: 404 problem details for signed-in callers,
+// 401 for anonymous ones through the fallback policy (ADR-011).
+app.MapFallback("/api/{**path}", () => Results.Problem(statusCode: StatusCodes.Status404NotFound));
+
+// History-mode client routes get the SPA shell. The shell holds no data, so it is open (ADR-011).
+app.MapFallbackToFile("index.html").RequireAuthorization(HostPolicies.Anonymous);
+
 app.Run();
 
 internal sealed record HealthResponse(string Status);
