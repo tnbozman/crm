@@ -34,4 +34,18 @@ describe('App', () => {
 
     expect(await axeViolations(container)).toEqual([])
   })
+
+  it('renders the page inside the layout shell with a banner, skip link and main landmark', async () => {
+    server.use(http.get('/api/v1/health', () => HttpResponse.json({ status: 'ok' })))
+
+    await renderApp()
+
+    expect(screen.getByRole('banner')).toHaveTextContent('CRM')
+    const main = screen.getByRole('main')
+    expect(main).toHaveAttribute('id', 'main')
+    expect(screen.getByRole('link', { name: 'Skip to main content' })).toHaveAttribute(
+      'href',
+      '#main',
+    )
+  })
 })

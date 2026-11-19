@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import HealthStatus from '@/shell/HealthStatus.vue'
+import AppLayout from '@/ui/AppLayout.vue'
 </script>
 
 <template>
-  <main>
+  <AppLayout app-name="CRM">
+    <template #status>
+      <HealthStatus />
+    </template>
     <RouterView />
-    <HealthStatus />
-  </main>
+  </AppLayout>
 </template>
