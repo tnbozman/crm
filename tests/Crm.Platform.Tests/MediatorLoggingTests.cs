@@ -1,4 +1,5 @@
 using Crm.Platform.Messaging;
+using Crm.Platform.Testing.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Shouldly;
