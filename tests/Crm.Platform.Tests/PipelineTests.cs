@@ -10,8 +10,7 @@ public sealed class PipelineTests
     [Fact]
     public async Task Send_WithBehaviours_RunsThemInRegistrationOrderAroundTheHandler()
     {
-        var services = new ServiceCollection();
-        services.AddMediator();
+        var services = MediatorServices.Create();
         services.AddSingleton<Trace>();
         services.AddScoped<IRequestBehaviour, OuterBehaviour>();
         services.AddScoped<IRequestBehaviour, InnerBehaviour>();

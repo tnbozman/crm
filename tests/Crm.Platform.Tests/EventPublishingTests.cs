@@ -10,8 +10,7 @@ public sealed class EventPublishingTests
     [Fact]
     public async Task Publish_Event_InvokesEveryHandler()
     {
-        var services = new ServiceCollection();
-        services.AddMediator();
+        var services = MediatorServices.Create();
         services.AddSingleton<Deliveries>();
         services.AddEventSubscriber<AuditOnRename>();
         services.AddEventSubscriber<SearchOnRename>();

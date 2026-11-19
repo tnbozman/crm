@@ -10,8 +10,7 @@ public sealed class CorrelationTests
     [Fact]
     public async Task Send_WithoutCorrelation_AssignsOneSharedByTheScope()
     {
-        var services = new ServiceCollection();
-        services.AddMediator();
+        var services = MediatorServices.Create();
         services.AddRequestHandler<CorrelationQueryHandler>();
         await using var provider = services.BuildServiceProvider();
         await using var scope = provider.CreateAsyncScope();

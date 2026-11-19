@@ -12,9 +12,8 @@ public sealed class MediatorLoggingTests
     public async Task Send_Logs_RequestTypeAndCorrelation_NeverThePayload()
     {
         using var capture = new CapturingLoggerProvider();
-        var services = new ServiceCollection();
+        var services = MediatorServices.Create();
         services.AddLogging(logging => logging.AddProvider(capture));
-        services.AddMediator();
         services.AddRequestHandler<EchoQueryHandler>();
         await using var provider = services.BuildServiceProvider();
         await using var scope = provider.CreateAsyncScope();

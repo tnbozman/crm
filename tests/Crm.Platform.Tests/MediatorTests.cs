@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Crm.Platform.Messaging;
 using Crm.Platform.Security;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,8 +11,7 @@ public sealed class MediatorTests
     [Fact]
     public async Task Send_Query_InvokesTheSingleHandler_AndReturnsItsResponse()
     {
-        var services = new ServiceCollection();
-        services.AddMediator();
+        var services = MediatorServices.Create();
         services.AddRequestHandler<EchoQueryHandler>();
         await using var provider = services.BuildServiceProvider();
         await using var scope = provider.CreateAsyncScope();
@@ -27,8 +25,7 @@ public sealed class MediatorTests
     [Fact]
     public async Task Send_WithNoHandler_Throws()
     {
-        var services = new ServiceCollection();
-        services.AddMediator();
+        var services = MediatorServices.Create();
         await using var provider = services.BuildServiceProvider();
         await using var scope = provider.CreateAsyncScope();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
@@ -42,12 +39,8 @@ public sealed class MediatorTests
     [Fact]
     public async Task Send_RunsInCallersScope_CurrentUserIsTheSignedInUser()
     {
-        var services = new ServiceCollection();
-        services.AddMediator();
-        services.AddCurrentUser();
+        var services = MediatorServices.Create();
         services.AddRequestHandler<WhoAmIHandler>();
-        services.AddScoped<TestUserContext>();
-        services.AddScoped<IUserContext>(sp => sp.GetRequiredService<TestUserContext>());
         await using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
 
         var alice = Guid.NewGuid();
@@ -59,8 +52,7 @@ public sealed class MediatorTests
     private static async Task<Guid> SendAs(IServiceProvider provider, Guid userId)
     {
         await using var scope = provider.CreateAsyncScope();
-        var principal = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, userId.ToString())], "Test"));
-        scope.ServiceProvider.GetRequiredService<TestUserContext>().Principal = principal;
+        scope.ServiceProvider.GetRequiredService<TestUserContext>().Principal = MediatorServices.SignedIn(userId);
         return await scope.ServiceProvider.GetRequiredService<IMediator>().Send(new WhoAmI(), TestContext.Current.CancellationToken);
     }
 }

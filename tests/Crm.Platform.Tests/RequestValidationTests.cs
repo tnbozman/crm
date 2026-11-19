@@ -12,8 +12,7 @@ public sealed class RequestValidationTests
     [Fact]
     public async Task Send_InvalidRequest_ThrowsRequestValidationException_WithoutCallingTheHandler()
     {
-        var services = new ServiceCollection();
-        services.AddMediator();
+        var services = MediatorServices.Create();
         services.AddSingleton<Trace>();
         services.AddRequestHandler<RenameThingHandler>();
         await using var provider = services.BuildServiceProvider();
