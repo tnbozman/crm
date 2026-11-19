@@ -18,6 +18,15 @@ for t in $CLAUDE_TARGETS; do
     has_target "$t" || fail "CLAUDE.md lists 'make $t' but make help does not"
 done
 
+# B. Every target in the Makefile spec (docs/environment.md §3, the .PHONY list) appears in make help.
+SPEC_TARGETS=$(awk '/^## 3\. Makefile/,/^## 4\./' docs/environment.md \
+    | awk '/^\.PHONY:/{on=1} on{print} on && !/\\$/{exit}' \
+    | sed -e 's/^\.PHONY://' -e 's/\\//g' | tr -s ' \t' '\n' | grep -v '^$' | sort -u)
+[[ -n "$SPEC_TARGETS" ]] || fail "could not read the .PHONY list from docs/environment.md §3"
+for t in $SPEC_TARGETS; do
+    has_target "$t" || fail "docs/environment.md §3 specifies '$t' but make help does not list it"
+done
+
 echo ""
 if [[ $ERRORS -eq 0 ]]; then
     echo "make-targets: all checks passed."

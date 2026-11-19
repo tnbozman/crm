@@ -14,6 +14,7 @@
 | --- | --- | --- | --- | --- |
 | 2026-11-19 | xunit.v3 | 4.0.3 | latest stable on nuget.org | S0-2 |
 | 2026-11-19 | Shouldly | 4.3.0 | latest stable on nuget.org | S0-2 |
+| 2026-11-19 | Microsoft.Testing.Extensions.CodeCoverage | 18.12.0 | latest stable on nuget.org | S0-3 |
 
 Also pinned outside `Directory.Packages.props`:
 
