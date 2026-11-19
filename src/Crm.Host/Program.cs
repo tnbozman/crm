@@ -16,6 +16,7 @@ builder.Services
     .AddAuthentication(NoSignInAuthenticationHandler.SchemeName)
     .AddScheme<AuthenticationSchemeOptions, NoSignInAuthenticationHandler>(NoSignInAuthenticationHandler.SchemeName, configureOptions: null);
 
+builder.Services.AddCurrentUser();
 builder.Services.AddCrmAuthorization()
     .AddPolicy(HostPolicies.Anonymous, policy => policy.RequireAssertion(_ => true));
 

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text.Encodings.Web;
+using Crm.Platform.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -27,10 +28,12 @@ public sealed class FakeAuthHandler(IOptionsMonitor<FakeAuthOptions> options, IL
 
         Claim[] claims =
         [
-            new(ClaimTypes.NameIdentifier, user.Id),
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.Name),
             new(ClaimTypes.Email, user.Email),
             .. user.Roles.Select(role => new Claim(ClaimTypes.Role, role)),
+            .. user.TeamIds.Select(id => new Claim(CrmClaimTypes.Team, id.ToString())),
+            .. user.BusinessUnitIds.Select(id => new Claim(CrmClaimTypes.BusinessUnit, id.ToString())),
         ];
         var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, SchemeName));
         return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(principal, SchemeName)));
