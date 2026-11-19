@@ -44,8 +44,11 @@ build-web:       ## frontend only
 run:             ## run the host serving the built frontend (https://localhost:5001)
 	dotnet run --project $(HOST) --launch-profile https
 
-dev:             ## backend watch + Vite dev server with proxy
-	$(call todo,S0-8,make dev runs dotnet watch and the Vite dev server)
+dev:             ## backend watch (https://localhost:5001) + Vite dev server with /api proxy (http://localhost:5173)
+	@trap 'kill 0' INT TERM; \
+	dotnet watch --project $(HOST) --launch-profile https -p:SkipFrontend=true & \
+	pnpm --dir $(WEB) dev & \
+	wait
 
 dev-web:         ## Vite dev server only (http://localhost:5173; the debugger runs the host)
 	pnpm --dir $(WEB) dev

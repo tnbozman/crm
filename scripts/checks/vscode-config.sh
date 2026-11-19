@@ -56,6 +56,19 @@ while IFS=$'\t' read -r name profile file; do
         || fail "configuration '$name' uses launch profile '$profile', which $file does not define"
 done < <(jq -r '.configurations[] | select(.launchSettingsProfile) | [.name, .launchSettingsProfile, (.launchSettingsFilePath // "src/Crm.Host/Properties/launchSettings.json")] | @tsv' "$LAUNCH")
 
+# G. The Vite /api proxy targets a URL the debugged host listens on (Host (.NET) launch profile).
+HOST_PROFILE=$(jq -r '.configurations[] | select(.name == "Host (.NET)") | .launchSettingsProfile // empty' "$LAUNCH")
+PROXY_TARGET=$(grep -A3 "'/api'" src/web/vite.config.ts | grep -oE "target: '[^']+'" | sed -E "s/target: '([^']+)'/\1/" || true)
+if [[ -z "$HOST_PROFILE" ]]; then
+    fail "configuration 'Host (.NET)' has no launchSettingsProfile, so its URLs are not the ones make run and the Vite proxy use"
+elif [[ -z "$PROXY_TARGET" ]]; then
+    fail "src/web/vite.config.ts has no '/api' proxy target"
+else
+    URLS=$(jq -r --arg p "$HOST_PROFILE" '.profiles[$p].applicationUrl // ""' src/Crm.Host/Properties/launchSettings.json | tr ';' '\n')
+    grep -qxF "$PROXY_TARGET" <<<"$URLS" \
+        || fail "Vite proxies /api to $PROXY_TARGET, but launch profile '$HOST_PROFILE' listens on: $(tr '\n' ' ' <<<"$URLS")"
+fi
+
 echo ""
 if [[ $ERRORS -eq 0 ]]; then
     echo "vscode-config: all checks passed."
