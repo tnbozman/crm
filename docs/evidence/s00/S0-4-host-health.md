@@ -27,6 +27,7 @@ Each was seen failing first for the stated reason (404; 200 instead of 401; empt
 ## Other verification
 
 - `make api-client` writes `openapi/Crm.Host.json` and fails if the document is missing or lacks `/api/v1/health`. Regenerating gives no diff. A plain `make build` does not generate it.
+- `make api-client-check` (part of `make verify`) fails when the committed `openapi/Crm.Host.json` differs from the regenerated one. Seen failing with a planted stale title, and passing once the document was restored.
 - Real host smoke test (`dotnet run`, HTTP on loopback): `GET /api/v1/health` returns 200 `{"status":"ok"}`. `GET /api/v1/nope` without a sign-in returns 401 `application/problem+json`.
 
 ## Interim measures (tracked)

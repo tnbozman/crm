@@ -82,6 +82,7 @@ api-client:      ## regenerate the OpenAPI document (and TypeScript API types)
 	$(call todo,S0-5,make api-client generates TypeScript types from $(OPENAPI))
 
 api-client-check: api-client   ## fail if generated client differs from committed
+	@git diff --exit-code -- $(OPENAPI) || { echo "api-client-check: $(OPENAPI) is stale; run make api-client and commit it" >&2; exit 1; }
 	$(call todo,S0-5,make api-client-check diffs the generated client in $(WEB)/src/api)
 
 db-up:           ## start the dev database service (run on the Docker host)
