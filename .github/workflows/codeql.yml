@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
+      actions: read # the action reads its own workflow run; without it analyze fails
       contents: read
       security-events: write
     strategy:

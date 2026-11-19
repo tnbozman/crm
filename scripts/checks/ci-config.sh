@@ -43,6 +43,17 @@ for ecosystem in nuget npm github-actions devcontainers; do
         || fail "$DEPENDABOT has no update entry for '$ecosystem'"
 done
 
+# F. CodeQL's job can read its own run (actions: read) and upload results (security-events: write).
+#    Without actions: read, analyze fails with "Resource not accessible by integration".
+CODEQL=.github/workflows/codeql.yml
+if [[ -f "$CODEQL" ]]; then
+    for permission in "actions: read" "contents: read" "security-events: write"; do
+        grep -qE "^\s+$permission\s*(#.*)?$" "$CODEQL" || fail "$CODEQL does not grant '$permission'"
+    done
+else
+    fail "$CODEQL is missing"
+fi
+
 # E. Git hooks: fast checks before commit, full gate before push.
 check_hook() {
     local hook=".githooks/$1"; shift
