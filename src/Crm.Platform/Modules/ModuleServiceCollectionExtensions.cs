@@ -11,7 +11,9 @@ public static class ModuleServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(registry);
 
         services.AddSingleton(registry);
-        var mvc = services.AddControllers();
+        var mvc = services.AddControllers()
+            .ConfigureApplicationPartManager(parts => parts.FeatureProviders.Add(
+                new ModuleControllerFeatureProvider(registry.Modules.Select(m => m.ControllersAssembly).ToHashSet())));
         foreach (var module in registry.Modules)
         {
             module.AddServices(services, configuration);

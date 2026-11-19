@@ -1,5 +1,6 @@
 using Crm.Platform.Modules;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
@@ -44,5 +45,34 @@ public sealed class ModuleCompositionTests
 
         using var provider = services.BuildServiceProvider();
         provider.GetRequiredService<ModuleRegistry>().ShouldBeSameAs(registry);
+    }
+
+    [Fact]
+    public void AddModules_InternalControllerInModuleAssembly_IsDiscovered()
+    {
+        var services = new ServiceCollection();
+
+        services.AddModules(new ModuleRegistry([new TestModule("Directory", typeof(InternalTestController).Assembly)]), EmptyConfiguration);
+
+        DiscoveredControllers(services).ShouldContain(typeof(InternalTestController));
+    }
+
+    [Fact]
+    public void AddModules_InternalControllerOutsideModuleAssemblies_IsNotDiscovered()
+    {
+        var services = new ServiceCollection();
+
+        services.AddModules(new ModuleRegistry([new TestModule("Directory", typeof(Should).Assembly)]), EmptyConfiguration);
+        services.AddControllers().AddApplicationPart(typeof(InternalTestController).Assembly); // a part, but not a module
+
+        DiscoveredControllers(services).ShouldNotContain(typeof(InternalTestController));
+    }
+
+    private static List<Type> DiscoveredControllers(ServiceCollection services)
+    {
+        var partManager = (ApplicationPartManager)services.Single(d => d.ServiceType == typeof(ApplicationPartManager)).ImplementationInstance!;
+        var feature = new ControllerFeature();
+        partManager.PopulateFeature(feature);
+        return feature.Controllers.Select(c => c.AsType()).ToList();
     }
 }
