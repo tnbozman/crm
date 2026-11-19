@@ -21,6 +21,12 @@ The module system exists and is enforced by tests. A user signs in with Entra ID
 
 ## Stories
 
+**Agreed order (kickoff, 2026-11-19):** S1-1 → S1-2 → S1-3 → S1-4 → S1-5 → S1-6 → S1-8 → S1-7 → S1-9.
+- S1-2 comes before S1-3 because the outbox stories need two modules with DbContexts and migrations, which the scaffolder (with the Migrator and the SQL fixture migrations step) produces.
+- S1-8 comes before S1-7 because the frontend's antiforgery header, cookie session and Playwright journeys depend on the server-side headers, cookies and antiforgery.
+- S1-2, S1-3 and S1-5 are expected to be split (~400-line guideline). S1-9, and possibly S1-7's Playwright work, are the candidates to slip to S2 given reduced Christmas capacity.
+- Decisions needed during the sprint: EF Core in `Crm.Platform` for the outbox, which conflicts with the S0-9 architecture rule (ADR needed); the idle session limit (S1-7, business owner).
+
 ### S1-1 Module contract and architecture tests (E46)
 
 Tests first (`Crm.Architecture.Tests`):
