@@ -37,6 +37,7 @@ public sealed class EndpointPolicyTests(WebApplicationFactory<Program> factory, 
         unprotected.ShouldBe(
             [
                 "controller TestOnly: api/v1/test-only/forbidden",
+                "controller TestOnly: api/v1/test-only/forbidden-while-writing",
                 "controller TestOnly: api/v1/test-only/invalid",
                 "controller TestOnly: api/v1/test-only/me",
                 "controller TestOnly: api/v1/test-only/missing",

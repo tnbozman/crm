@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authentication;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers(options => options.Filters.Add<ProblemDetailsExceptionFilter>());
-builder.Services.AddProblemDetails();
+builder.Services.AddCrmErrorHandling();
 builder.Services.AddOpenApi();
 builder.Services.AddMediator();
 builder.Services.AddModules(new ModuleRegistry(HostModules.All), builder.Configuration);

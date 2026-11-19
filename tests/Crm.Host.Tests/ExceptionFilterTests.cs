@@ -44,4 +44,15 @@ public sealed class ExceptionFilterTests(TestHostFactory factory) : IClassFixtur
         using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
         problem.RootElement.GetProperty("errors").GetProperty("Name")[0].GetString().ShouldBe("Too long for GET.");
     }
+
+    [Fact]
+    public async Task ForbiddenException_ThrownOutsideMvcFilters_IsConvertedTo403ProblemDetails()
+    {
+        using var client = factory.CreateSignedInClient("Production");
+
+        using var response = await client.GetAsync(new Uri(TestOnlyController.ForbiddenWhileWritingPath, UriKind.Relative), TestContext.Current.CancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        response.Content.Headers.ContentType.ShouldNotBeNull().MediaType.ShouldBe("application/problem+json");
+    }
 }

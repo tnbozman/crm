@@ -15,6 +15,7 @@ public sealed class TestOnlyController : ControllerBase
     public const string AdminOnlyPath = "/api/v1/test-only/admin-only";
     public const string ForbiddenPath = "/api/v1/test-only/forbidden";
     public const string InvalidPath = "/api/v1/test-only/invalid";
+    public const string ForbiddenWhileWritingPath = "/api/v1/test-only/forbidden-while-writing";
 
     /// <summary>The signed-in user as services see it, through ICurrentUser.</summary>
     [HttpGet("me")]
@@ -45,6 +46,15 @@ public sealed class TestOnlyController : ControllerBase
     [HttpGet("invalid")]
     public IActionResult Invalid() => throw new RequestValidationException(new Dictionary<string, string[]> { ["Name"] = [$"Too long for {Request.Method}."] });
 
+    /// <summary>Throws while the response is written: outside MVC exception filters, so only a global handler sees it.</summary>
+    [HttpGet("forbidden-while-writing")]
+    public IActionResult ForbiddenWhileWriting() => new ThrowingResult(new ForbiddenException($"Not for this user at {Request.Path}."));
+
     [HttpGet("missing")]
     public IActionResult Missing() => throw new NotFoundException($"No test record at {Request.Path}.");
+}
+
+internal sealed class ThrowingResult(Exception exception) : IActionResult
+{
+    public Task ExecuteResultAsync(ActionContext context) => throw exception;
 }
