@@ -35,4 +35,12 @@ public sealed class ModuleBoundaryTests
         ModuleRules.ContractsTypesThatAreNotMessagesDtosOrConstants(FixtureModules.All).ShouldBe(
             ["Fixture.Rogue.Contracts.IRogueQueries is an interface", "Fixture.Rogue.Contracts.RogueCalculator is a class, not a record"],
             ignoreOrder: true);
+
+    [Fact]
+    public void Module_Types_AreInternalUnlessInContracts() =>
+        ModuleRules.PublicImplementationTypes(ShippedModules.All).ShouldBeEmpty();
+
+    [Fact]
+    public void Module_Types_AreInternalUnlessInContracts_FlagsRogueOnly() =>
+        ModuleRules.PublicImplementationTypes(FixtureModules.All).ShouldBe(["Fixture.Rogue.Services.RogueService"]);
 }

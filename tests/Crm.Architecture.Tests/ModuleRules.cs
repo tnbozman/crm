@@ -1,5 +1,7 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Crm.Platform.Modules;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Crm.Architecture.Tests;
 
@@ -62,4 +64,17 @@ internal static class ModuleRules
     private static bool IsRecord(Type type) =>
         type.GetMethod("<Clone>$") is not null
         || (type.IsValueType && type.GetMethod("PrintMembers", BindingFlags.NonPublic | BindingFlags.Instance)?.IsDefined(typeof(CompilerGeneratedAttribute)) == true);
+
+    /// <summary>
+    /// Implementation types are internal, except the IModule class (the host creates it), controllers
+    /// (MVC discovers public controllers only) and API DTOs (public controller actions return them).
+    /// </summary>
+    public static IReadOnlyList<string> PublicImplementationTypes(IReadOnlyList<ModuleUnderTest> modules) =>
+        modules
+            .SelectMany(m => m.Implementation.GetExportedTypes())
+            .Where(t => !typeof(IModule).IsAssignableFrom(t)
+                && !typeof(ControllerBase).IsAssignableFrom(t)
+                && t.Namespace?.EndsWith(".Dtos", StringComparison.Ordinal) != true)
+            .Select(t => t.FullName!)
+            .ToList();
 }
