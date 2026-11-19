@@ -11,6 +11,8 @@ export default defineConfig({
     },
   },
   server: {
+    // IPv4 loopback: Node 22 resolves "localhost" to ::1 only, and VS Code port forwarding connects to 127.0.0.1.
+    host: '127.0.0.1',
     port: 5173,
     strictPort: true,
     // make dev / the Full stack debug compound: the host runs on its https launch profile.

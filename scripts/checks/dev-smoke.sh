@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Smoke test for make dev: the host (dotnet watch) and Vite start, and /api reaches the host through the
-# Vite proxy. Needs ports 5001 and 5173 free, so it is not part of make verify. Run via: make check-dev
+# Vite proxy, on 127.0.0.1 (the address VS Code port forwarding connects to). Needs ports 5001 and 5173 free, so it is not part of make verify. Run via: make check-dev
 set -euo pipefail
 
 cd "$(dirname "$0")/../.."
 
-for url in https://localhost:5001/ http://localhost:5173/; do
+for url in https://127.0.0.1:5001/ http://127.0.0.1:5173/; do
     if curl -sk -m 2 -o /dev/null "$url"; then
         echo "FAIL: $url is already in use; stop make dev, make run or the debugger first." >&2
         exit 1
@@ -27,7 +27,7 @@ cleanup() {
 trap cleanup EXIT
 
 for _ in $(seq 1 120); do
-    if [[ "$(curl -s -m 2 http://localhost:5173/api/v1/health || true)" == '{"status":"ok"}' ]]; then
+    if [[ "$(curl -s -m 2 http://127.0.0.1:5173/api/v1/health || true)" == '{"status":"ok"}' ]]; then
         echo "dev-smoke: make dev serves /api/v1/health through the Vite proxy."
         exit 0
     fi
