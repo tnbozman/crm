@@ -1,12 +1,12 @@
 # ADR-011: API access defaults
 
-- Status: Accepted (2026-11-19, S0-4; confirmed in review)
+- Status: Accepted (2026-11-19, S0-4; confirmed in review; SPA shell added in S0-7)
 
 ## Decision
 
 1. **Deny by default.** A fallback authorisation policy requires an authenticated user for every endpoint.
-2. **Open only through a named policy.** An endpoint that does not need a signed-in user names a policy from `HostPolicies` (for example `.RequireAuthorization(HostPolicies.Anonymous)`). It does not use `.AllowAnonymous()`. Today only `/api/v1/health` is open. Each opening needs a test, and an architecture test will later allow-list them.
-3. **No route probing.** An anonymous request to any `/api` route other than health gets 401 problem details, whether or not the route exists. Signed-in callers get 404 problem details for unknown routes.
+2. **Open only through a named policy.** An endpoint that does not need a signed-in user names a policy from `HostPolicies` (for example `.RequireAuthorization(HostPolicies.Anonymous)`). It does not use `.AllowAnonymous()`. Today the open endpoints are `/api/v1/health` and the SPA shell fallback (`MapFallbackToFile("index.html")`, S0-7). Static files in `wwwroot` are served before authentication: they are the public build of the SPA and hold no data. Each opening needs a test, and an architecture test will later allow-list them.
+3. **No route probing.** An anonymous request to any `/api` route other than health gets 401 problem details, whether or not the route exists. Signed-in callers get 404 problem details for unknown routes. Unknown `/api` routes never fall through to the SPA: `MapFallback("/api/{**path}")` answers them, and it carries no named policy (S0-7).
 
 ## Consequences
 

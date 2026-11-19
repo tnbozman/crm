@@ -291,6 +291,12 @@ app.MapModules();                     // /api/v1/*
 app.MapFallbackToFile("index.html");  // SPA routes
 ```
 
+> **Verified in S0-7 (2026-11-19, .NET SDK 10.0.404). The repository is now the source of truth.**
+> - **Static web assets: pitfall confirmed.** After a clean build, `staticwebassets.*.endpoints.json` lists no `wwwroot` files (`"Endpoints":[]`), because the frontend build creates them after evaluation. `MapStaticAssets` would serve nothing, so the host uses `UseDefaultFiles` and `UseStaticFiles`.
+> - **Publish: pitfall does not apply. `IncludeFrontendInPublish` is not used.** The SDK target `_IncludePrePublishGeneratedContent` (Microsoft.NET.Sdk.Publish) re-globs `wwwroot/**` at publish time, so a clean `make publish` already contains the SPA. `scripts/checks/publish-contains-spa.sh` (in `make verify`) proves it from a clean state, so if a future SDK changes this, verify fails.
+> - **Host wiring** adds `app.MapFallback("/api/{**path}", …)` before the SPA fallback. Without it, `MapFallbackToFile` returns `index.html` for unknown API routes. The SPA fallback is opened with `HostPolicies.Anonymous` (ADR-011).
+> - `scripts/checks/frontend-incremental.sh` (in `make verify`) proves that `BuildFrontend` is skipped when inputs are unchanged and reruns when an input changes.
+
 **Pitfall to test, not assume (verify in S0)**: files created during the build may not be in the static-web-asset manifest that `MapStaticAssets` uses, because item globs are evaluated before the target runs. Use `UseStaticFiles` (reads `wwwroot` from disk) and keep the tests below.
 
 Required tests (S0): after `make build`, `GET /` returns the SPA `index.html`; `GET /some/client/route` returns `index.html`; `GET /api/v1/unknown` returns 404 problem details (not HTML); after `make publish`, `artifacts/publish/wwwroot/index.html` exists.

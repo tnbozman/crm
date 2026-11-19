@@ -99,7 +99,7 @@ Done when: ADR-001 written with decision and evidence; wrappers tested.
 
 Evidence: [docs/evidence/s00/S0-6-ui-foundation.md](../evidence/s00/S0-6-ui-foundation.md); decision in [ADR-001](../adr/001-ui-library.md).
 
-### S0-7 .NET build builds and serves the frontend (E46)
+### ✅ S0-7 .NET build builds and serves the frontend (E46)
 
 Tests first (`Crm.Host.Tests`, category `Integration`):
 - `Get_Root_ReturnsSpaIndexHtml` after `dotnet build` (test fails if `wwwroot/index.html` is absent).
@@ -111,6 +111,8 @@ Tests first (`Crm.Host.Tests`, category `Integration`):
 Implement: `BuildFrontend` and `IncludeFrontendInPublish` targets, Vite `outDir`, `UseDefaultFiles/UseStaticFiles/MapFallbackToFile`, `SkipFrontend` switch, `.gitignore` for `wwwroot`.
 
 Done when: `make build`, `make run`, `make publish` demonstrate the demo; pitfall in `docs/environment.md` §4 confirmed or corrected in the doc.
+
+Evidence: [docs/evidence/s00/S0-7-spa-hosting.md](../evidence/s00/S0-7-spa-hosting.md). `IncludeFrontendInPublish` not needed (SDK re-globs `wwwroot` at publish); static-asset manifest pitfall confirmed.
 
 ### S0-8 Dev loop and VS Code (E46)
 
