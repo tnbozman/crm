@@ -45,6 +45,14 @@ public sealed class LayeringTests
             ignoreOrder: true);
 
     [Fact]
+    public void Dtos_DoNotReference_Models() =>
+        LayeringRules.DtosReferencingModels(CrmAssemblies.All).ShouldBeEmpty("DTOs are the HTTP contract and know nothing of EF models");
+
+    [Fact]
+    public void Dtos_DoNotReference_Models_FlagsRogueOnly() =>
+        LayeringRules.DtosReferencingModels(FixtureModules.Implementations).ShouldBe(["Fixture.Rogue.Dtos.RogueResponse"]);
+
+    [Fact]
     public void Controllers_ReturnOnlyDtoTypes()
     {
         var offenders = CrmAssemblies.All

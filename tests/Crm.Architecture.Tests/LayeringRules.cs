@@ -19,6 +19,17 @@ internal static class LayeringRules
             .ShouldNot().HaveDependencyOnAny("Microsoft.AspNetCore.Http", "Microsoft.AspNetCore.Mvc")
             .GetResult());
 
+    public static IReadOnlyList<string> DtosReferencingModels(IReadOnlyList<Assembly> assemblies)
+    {
+        var models = NamespacesEndingWith(assemblies, ".Models");
+        return models.Length == 0
+            ? []
+            : Failing(Types.InAssemblies(assemblies)
+                .That().ResideInNamespaceEndingWith(".Dtos")
+                .ShouldNot().HaveDependencyOnAny(models)
+                .GetResult());
+    }
+
     /// <summary>Models are not public, and no DTO or controller member (of any visibility) has a Model in its signature.</summary>
     public static IReadOnlyList<string> LeakedModels(IReadOnlyList<Assembly> assemblies)
     {
