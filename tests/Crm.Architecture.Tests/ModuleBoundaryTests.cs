@@ -65,4 +65,18 @@ public sealed class ModuleBoundaryTests
                 "Fixture.Rogue.Persistence.RogueReportingDbContext has default schema 'reporting', expected 'rogue'",
             ],
             ignoreOrder: true);
+
+    [Fact]
+    public void EachRequest_HasExactlyOneHandler_InOwningModule() =>
+        ModuleRules.RequestHandlerProblems(ShippedModules.All).ShouldBeEmpty();
+
+    [Fact]
+    public void EachRequest_HasExactlyOneHandler_InOwningModule_FlagsRogueOnly() =>
+        ModuleRules.RequestHandlerProblems(FixtureModules.All).ShouldBe(
+            [
+                "Fixture.Rogue.Contracts.GetRogueStatus has no handler",
+                "Fixture.Sample.Contracts.GetSampleSummary has 2 handlers",
+                "Fixture.Sample.Contracts.GetSampleSummary is handled by Fixture.Rogue.Handlers.SampleSummaryHijacker, outside Fixture.Sample",
+            ],
+            ignoreOrder: true);
 }

@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Crm.Platform.Messaging;
 using Crm.Platform.Modules;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -129,6 +130,40 @@ internal static class ModuleRules
                 .Select(t => (Type: t, Schema: DbContextModels.Load(t).GetDefaultSchema()))
                 .Where(x => x.Schema != expected)
                 .Select(x => $"{x.Type.FullName} has default schema '{x.Schema}', expected '{expected}'"));
+        }
+
+        return problems;
+    }
+
+    /// <summary>Each request in a module's Contracts has exactly one handler, in that module's implementation (ADR-009).</summary>
+    public static IReadOnlyList<string> RequestHandlerProblems(IReadOnlyList<ModuleUnderTest> modules)
+    {
+        var handlers = modules
+            .SelectMany(m => m.Implementation.GetTypes())
+            .Where(t => !t.IsAbstract)
+            .SelectMany(t => t.GetInterfaces()
+                .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRequestHandler<,>))
+                .Select(i => (Request: i.GetGenericArguments()[0], Handler: t)))
+            .ToLookup(x => x.Request, x => x.Handler);
+
+        var problems = new List<string>();
+        foreach (var module in modules)
+        {
+            var requests = module.Contracts.GetTypes()
+                .Where(t => !t.IsAbstract && t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRequest<>)));
+
+            foreach (var request in requests)
+            {
+                var found = handlers[request].ToList();
+                if (found.Count != 1)
+                {
+                    problems.Add(found.Count == 0 ? $"{request.FullName} has no handler" : $"{request.FullName} has {found.Count} handlers");
+                }
+
+                problems.AddRange(found
+                    .Where(h => h.Assembly != module.Implementation)
+                    .Select(h => $"{request.FullName} is handled by {h.FullName}, outside {module.Implementation.GetName().Name}"));
+            }
         }
 
         return problems;

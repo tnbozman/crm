@@ -1,6 +1,7 @@
 using Crm.Host;
 using Crm.Host.Security;
 using Crm.Platform.Errors;
+using Crm.Platform.Messaging;
 using Crm.Platform.Modules;
 using Crm.Platform.Security;
 using Microsoft.AspNetCore.Authentication;
@@ -10,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers(options => options.Filters.Add<ProblemDetailsExceptionFilter>());
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
+builder.Services.AddMediator();
 builder.Services.AddModules(new ModuleRegistry(HostModules.All), builder.Configuration);
 
 builder.Services

@@ -1,3 +1,4 @@
+using Crm.Platform.Messaging;
 using Crm.Platform.Modules;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,5 +15,14 @@ public sealed class ModuleCompositionTests(WebApplicationFactory<Program> factor
         var registry = factory.Services.GetService<ModuleRegistry>();
 
         registry.ShouldNotBeNull("the host composes its modules with AddModules").Modules.ShouldBe(HostModules.All);
+    }
+
+    [Fact]
+    public async Task Host_Started_ProvidesTheMediatorPerScope()
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+
+        scope.ServiceProvider.GetService<IMediator>().ShouldNotBeNull("modules call each other only through the mediator (ADR-009)");
+        scope.ServiceProvider.GetService<IEventPublisher>().ShouldNotBeNull();
     }
 }

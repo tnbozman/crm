@@ -1,5 +1,7 @@
 using System.Reflection;
+using Crm.Platform.Messaging;
 using Crm.Platform.Modules;
+using Fixture.Sample.Handlers;
 using Fixture.Sample.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,5 +20,6 @@ public sealed class SampleModule : IModule
     {
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<ISampleService, SampleService>();
+        services.AddRequestHandler<GetSampleSummaryHandler>();
     }
 }

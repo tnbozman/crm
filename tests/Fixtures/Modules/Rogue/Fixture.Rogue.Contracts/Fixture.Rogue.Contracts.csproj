@@ -4,6 +4,10 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\src\Crm.Platform\Crm.Platform.csproj" />
+  </ItemGroup>
+
   <!-- Violation: a Contracts project referencing EF Core. -->
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
