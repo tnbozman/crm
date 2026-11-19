@@ -344,6 +344,13 @@ Required tests (S0): after `make build`, `GET /` returns the SPA `index.html`; `
 
 `.vscode/tasks.json` — tasks that call make: `build`, `test`, `test-web`, `lint`, `format`, and a background `web dev` task with a problem matcher so the debugger waits for Vite.
 
+> **Implemented in S0-8. The `.vscode` files are now the source of truth**, checked by `scripts/checks/vscode-config.sh` in `make lint`. They differ from the sketch above in these ways:
+> - `Host (.NET)` uses `launchSettingsProfile: "https"` (https://localhost:5001, http://localhost:5000, Development). There is no inline `env`, so F5, `make run` and `make dev` listen on the same URLs.
+> - The `web dev` task runs `make dev-web` (Vite only). Every task runs exactly one `make` target.
+> - Vitest Explorer reads `vitest.rootConfig: "src/web/vite.config.ts"`. The `vitest.root` key is not a setting of Vitest Explorer 1.52 and was silently ignored.
+> - The Vite dev server uses port 5173 (`strictPort`) and proxies `/api` to `https://localhost:5001` with `secure: false`, because the development certificate is untrusted inside the container. The proxy target must be a URL of the `Host (.NET)` launch profile (check G).
+> - C# Dev Kit 3.40 needs no setting for Microsoft.Testing.Platform (ADR-003). It has no MTP option and detects MTP from `global.json`.
+
 Test running: C# Dev Kit Test Explorer runs and debugs xUnit tests; Vitest Explorer runs the frontend tests; Playwright extension runs e2e. Integration tests appear in Test Explorer and need the `db` service running (it is part of the devcontainer).
 
 ## 6. Quality gates in the repo
