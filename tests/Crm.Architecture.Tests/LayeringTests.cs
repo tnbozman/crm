@@ -33,7 +33,16 @@ public sealed class LayeringTests
 
     [Fact]
     public void Models_AreInternalAndNotUsedInDtosOrControllerSignatures() =>
-        LayeringRules.PublicModels(CrmAssemblies.All).ShouldBeEmpty("EF models never leave their module");
+        LayeringRules.LeakedModels(CrmAssemblies.All).ShouldBeEmpty("EF models never leave their module");
+
+    [Fact]
+    public void Models_AreInternalAndNotUsedInDtosOrControllerSignatures_FlagsRogueOnly() =>
+        LayeringRules.LeakedModels(FixtureModules.Implementations).ShouldBe(
+            [
+                "Fixture.Rogue.Controllers.RoguesController.ToResponse uses Fixture.Rogue.Models.RogueItem",
+                "Fixture.Rogue.Dtos.RogueResponse.From uses Fixture.Rogue.Models.RogueItem",
+            ],
+            ignoreOrder: true);
 
     [Fact]
     public void Controllers_ReturnOnlyDtoTypes()

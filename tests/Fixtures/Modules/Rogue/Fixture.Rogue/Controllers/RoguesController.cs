@@ -18,6 +18,9 @@ internal sealed class RoguesController : ControllerBase
     {
         var context = HttpContext.RequestServices.GetRequiredService<RogueDbContext>();
         var item = new RogueItem(id);
-        return new RogueResponse(context.ContextId.InstanceId == Guid.Empty ? Guid.Empty : item.Id);
+        return context.ContextId.InstanceId == Guid.Empty ? new RogueResponse(Guid.Empty) : ToResponse(item);
     }
+
+    /// <summary>Violation: a Model in a controller signature.</summary>
+    private static RogueResponse ToResponse(RogueItem item) => RogueResponse.From(item);
 }
