@@ -41,6 +41,14 @@ public sealed class LayeringTests
         LayeringRules.ServicesReferencingHttpContextOrMvc(FixtureModules.Implementations).ShouldBe(["Fixture.Rogue.Services.RogueAuditService"]);
 
     [Fact]
+    public void Services_DoNotCall_MediatorPublish() =>
+        LayeringRules.PublishersOutsideTheRelay(CrmAssemblies.All).ShouldBeEmpty("services write events to their outbox; only the relay publishes (ADR-009)");
+
+    [Fact]
+    public void Services_DoNotCall_MediatorPublish_FlagsRogueOnly() =>
+        LayeringRules.PublishersOutsideTheRelay(FixtureModules.Implementations).ShouldBe(["Fixture.Rogue.Services.RogueNotifier"]);
+
+    [Fact]
     public void Models_AreInternalAndNotUsedInDtosOrControllerSignatures() =>
         LayeringRules.LeakedModels(CrmAssemblies.All).ShouldBeEmpty("EF models never leave their module");
 

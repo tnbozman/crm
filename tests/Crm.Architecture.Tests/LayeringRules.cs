@@ -88,6 +88,18 @@ internal static partial class LayeringRules
             .Order(StringComparer.Ordinal)
             .ToList();
 
+    /// <summary>
+    /// Services, controllers and handlers never depend on IEventPublisher: they write events to their module's
+    /// outbox, and only the outbox relay (in Persistence) publishes, after the commit (ADR-009).
+    /// </summary>
+    public static IReadOnlyList<string> PublishersOutsideTheRelay(IReadOnlyList<Assembly> assemblies) =>
+        Failing(Types.InAssemblies(assemblies)
+            .That().ResideInNamespaceEndingWith(".Services")
+            .Or().ResideInNamespaceEndingWith(".Controllers")
+            .Or().ResideInNamespaceEndingWith(".Handlers")
+            .ShouldNot().HaveDependencyOn("Crm.Platform.Messaging.IEventPublisher")
+            .GetResult());
+
     public static IReadOnlyList<string> DtosReferencingModels(IReadOnlyList<Assembly> assemblies)
     {
         var models = NamespacesEndingWith(assemblies, ".Models");
