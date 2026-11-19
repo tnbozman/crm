@@ -23,6 +23,33 @@ public sealed class RequestAuthorisationTests
 
         provider.GetRequiredService<Trace>().ShouldBeEmpty();
     }
+
+    [Fact]
+    public async Task Send_RequestRequiringFinance_AsFinance_ReachesTheHandler()
+    {
+        var services = MediatorServices.Create(Roles.Finance);
+        services.AddSingleton<Trace>();
+        services.AddRequestHandler<GetMarginsHandler>();
+        await using var provider = services.BuildServiceProvider();
+        await using var scope = provider.CreateAsyncScope();
+
+        var margin = await scope.ServiceProvider.GetRequiredService<IMediator>().Send(new GetMargins(), TestContext.Current.CancellationToken);
+
+        margin.ShouldBe(0.25m);
+    }
+
+    [Fact]
+    public async Task Send_RequestWithoutPolicy_AsAnonymous_ThrowsForbidden()
+    {
+        var services = MediatorServices.Create();
+        services.AddRequestHandler<EchoQueryHandler>();
+        await using var provider = services.BuildServiceProvider();
+        await using var scope = provider.CreateAsyncScope();
+        scope.ServiceProvider.GetRequiredService<TestUserContext>().Principal = MediatorServices.Anonymous();
+
+        await Should.ThrowAsync<ForbiddenException>(() => scope.ServiceProvider.GetRequiredService<IMediator>()
+            .Send(new EchoQuery("hi"), TestContext.Current.CancellationToken));
+    }
 }
 
 [RequiresPolicy(Policies.Finance)]
