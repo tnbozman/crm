@@ -38,9 +38,15 @@ public sealed class CurrentUser : ICurrentUser
             return Anonymous;
         }
 
+        if (!Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        {
+            throw new InvalidOperationException(
+                $"The signed-in principal has no GUID user ID in claim '{ClaimTypes.NameIdentifier}'. Sign-in must set it.");
+        }
+
         return new CurrentUser(
             isAuthenticated: true,
-            Guid.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!),
+            userId,
             principal.FindAll(ClaimTypes.Role).Select(c => c.Value),
             Guids(principal, CrmClaimTypes.Team),
             Guids(principal, CrmClaimTypes.BusinessUnit));

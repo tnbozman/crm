@@ -48,4 +48,17 @@ public sealed class CurrentUserTests
         user.TeamIds.ShouldBeEmpty();
         user.BusinessUnitIds.ShouldBeEmpty();
     }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("not-a-guid")]
+    public void CurrentUser_AuthenticatedWithoutGuidUserId_Throws(string? userId)
+    {
+        Claim[] claims = userId is null ? [] : [new Claim(ClaimTypes.NameIdentifier, userId)];
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, authenticationType: "Test"));
+
+        var exception = Should.Throw<InvalidOperationException>(() => CurrentUser.FromPrincipal(principal));
+
+        exception.Message.ShouldContain(ClaimTypes.NameIdentifier);
+    }
 }
