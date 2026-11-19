@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Crm.Platform.Messaging;
 
 /// <summary>Resolves handlers from the caller's scope, so they see the caller's ICurrentUser.</summary>
-internal sealed class Mediator(IServiceProvider services, EventTypes eventTypes) : IMediator, IEventPublisher
+internal sealed class Mediator(IServiceProvider services, EventTypes eventTypes, MessageContext context) : IMediator, IEventPublisher
 {
     public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
     {
@@ -17,6 +17,8 @@ internal sealed class Mediator(IServiceProvider services, EventTypes eventTypes)
     public Task Publish(MessageEnvelope envelope, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(envelope);
+        context.CorrelationId = envelope.CorrelationId;
+        context.CausationId = envelope.MessageId;
         if (eventTypes.Find(envelope.Type) is not { } eventType)
         {
             return Task.CompletedTask; // no module subscribes to this event
