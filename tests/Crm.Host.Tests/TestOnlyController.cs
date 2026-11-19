@@ -1,5 +1,6 @@
 using Crm.Platform.Errors;
 using Crm.Platform.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Crm.Host.Tests;
@@ -11,6 +12,7 @@ public sealed class TestOnlyController : ControllerBase
 {
     public const string MissingPath = "/api/v1/test-only/missing";
     public const string MePath = "/api/v1/test-only/me";
+    public const string AdminOnlyPath = "/api/v1/test-only/admin-only";
 
     /// <summary>The signed-in user as services see it, through ICurrentUser.</summary>
     [HttpGet("me")]
@@ -21,6 +23,11 @@ public sealed class TestOnlyController : ControllerBase
         user.TeamIds,
         user.BusinessUnitIds,
     });
+
+    /// <summary>Admins only, through the platform's role policy.</summary>
+    [HttpGet("admin-only")]
+    [Authorize(Policy = Policies.Admin)]
+    public IActionResult AdminOnly() => Ok("admin");
 
     /// <summary>No policy: the fallback policy must protect it.</summary>
     [HttpGet("protected")]
