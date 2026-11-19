@@ -9,7 +9,7 @@
   "[markdown]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
   "eslint.useFlatConfig": true,
   "eslint.workingDirectories": [{ "directory": "src/web" }],
-  "vitest.root": "src/web",
+  "vitest.rootConfig": "src/web/vite.config.ts",
   "tailwindCSS.experimental.classRegex": [["class:\\s*['\"`]([^'\"`]*)['\"`]"]],
   "files.exclude": { "**/bin": true, "**/obj": true },
   "mssql.connections": [

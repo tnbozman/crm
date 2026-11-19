@@ -44,7 +44,7 @@
     {
       "label": "web dev",
       "type": "shell",
-      "command": "make build-backend && pnpm --dir src/web dev",
+      "command": "make dev-web",
       "isBackground": true,
       "presentation": { "reveal": "silent" },
       "problemMatcher": {

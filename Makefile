@@ -13,7 +13,7 @@ TEST := dotnet test --solution $(SLN) -p:SkipFrontend=true --ignore-exit-code 8
 # Prints to stderr and exits 0 so verify and post-create keep working until the story lands.
 todo = @echo "TODO($(1)): $(2)" >&2
 
-.PHONY: help doctor setup hooks build build-backend build-web run dev \
+.PHONY: help doctor setup hooks build build-backend build-web run dev dev-web \
         test test-unit test-int test-arch test-web test-e2e \
         lint format format-check api-client api-client-check \
         db-up db-reset migrate migration-add module-new \
@@ -47,6 +47,9 @@ run:             ## run the host serving the built frontend (https://localhost:5
 dev:             ## backend watch + Vite dev server with proxy
 	$(call todo,S0-8,make dev runs dotnet watch and the Vite dev server)
 
+dev-web:         ## Vite dev server only (http://localhost:5173; the debugger runs the host)
+	pnpm --dir $(WEB) dev
+
 test-unit:       ## tests that need no database
 	$(TEST) --filter-not-trait "Category=Integration" --filter-not-trait "Category=Architecture"
 
@@ -66,6 +69,7 @@ test: test-unit test-int test-arch test-web   ## everything except e2e
 
 lint: format-check   ## C# format check, ESLint, Prettier check, vue-tsc
 	@bash scripts/checks/make-targets.sh
+	@bash scripts/checks/vscode-config.sh
 	pnpm --dir $(WEB) lint
 	pnpm --dir $(WEB) typecheck
 
