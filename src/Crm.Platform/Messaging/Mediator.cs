@@ -22,6 +22,10 @@ internal abstract class RequestInvoker<TResponse>
 internal sealed class RequestInvoker<TRequest, TResponse> : RequestInvoker<TResponse>
     where TRequest : IRequest<TResponse>
 {
-    public override Task<TResponse> Invoke(object request, IServiceProvider services, CancellationToken cancellationToken) =>
-        services.GetRequiredService<IRequestHandler<TRequest, TResponse>>().Handle((TRequest)request, cancellationToken);
+    public override Task<TResponse> Invoke(object request, IServiceProvider services, CancellationToken cancellationToken)
+    {
+        var handler = services.GetService<IRequestHandler<TRequest, TResponse>>()
+            ?? throw new InvalidOperationException($"No handler is registered for request {typeof(TRequest).FullName}.");
+        return handler.Handle((TRequest)request, cancellationToken);
+    }
 }
