@@ -24,15 +24,18 @@ echo "==> Installing git hooks..."
 make hooks
 
 echo "==> Waiting for SQL Server at ${CRM_SQL_SERVER:-db}..."
-SQL_PASS="${MSSQL_SA_PASSWORD:-Dev_Only_Passw0rd!}"
-for i in $(seq 1 30); do
-    if sqlcmd -C -S "${CRM_SQL_SERVER:-db}" -U sa -P "$SQL_PASS" -Q 'SELECT 1' -b &>/dev/null; then
-        echo "    SQL Server ready."
-        break
-    fi
-    echo "    Attempt $i/30 — sleeping 3s..."
-    sleep 3
-done
+if [[ -z "${CRM_SQL_PASSWORD:-}" ]]; then
+    echo "    CRM_SQL_PASSWORD not set; skipping (make doctor will report it)."
+else
+    for i in $(seq 1 30); do
+        if sqlcmd -C -S "${CRM_SQL_SERVER:-db}" -U "${CRM_SQL_USER:-sa}" -P "$CRM_SQL_PASSWORD" -Q 'SELECT 1' -b &>/dev/null; then
+            echo "    SQL Server ready."
+            break
+        fi
+        echo "    Attempt $i/30 — sleeping 3s..."
+        sleep 3
+    done
+fi
 
 echo "==> Running migrations..."
 if [[ -f "src/Crm.Migrator/Crm.Migrator.csproj" ]]; then

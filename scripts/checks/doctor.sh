@@ -43,16 +43,16 @@ fi
 # ---------------------------------------------------------------------------
 
 SQL_SERVER="${CRM_SQL_SERVER:-}"
+SQL_USER="${CRM_SQL_USER:-sa}"
+SQL_PASS="${CRM_SQL_PASSWORD:-}"
 if [[ -z "$SQL_SERVER" ]]; then
     fail "CRM_SQL_SERVER not set"
+elif [[ -z "$SQL_PASS" ]]; then
+    fail "CRM_SQL_PASSWORD not set (the devcontainer sets it from docker-compose.yml; rebuild the container)"
+elif sqlcmd -C -S "$SQL_SERVER" -U "$SQL_USER" -P "$SQL_PASS" -Q 'SELECT 1' -b &>/dev/null; then
+    pass "SQL Server at $SQL_SERVER accepts login"
 else
-    # SA password is the devcontainer default; override with MSSQL_SA_PASSWORD if set
-    SQL_PASS="${MSSQL_SA_PASSWORD:-Dev_Only_Passw0rd!}"
-    if sqlcmd -C -S "$SQL_SERVER" -U sa -P "$SQL_PASS" -Q 'SELECT 1' -b &>/dev/null; then
-        pass "SQL Server at $SQL_SERVER accepts login"
-    else
-        fail "SQL Server at $SQL_SERVER did not accept login (sa / \$MSSQL_SA_PASSWORD)"
-    fi
+    fail "SQL Server at $SQL_SERVER did not accept login ($SQL_USER / \$CRM_SQL_PASSWORD)"
 fi
 
 # ---------------------------------------------------------------------------

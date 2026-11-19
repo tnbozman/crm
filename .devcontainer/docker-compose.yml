@@ -1,3 +1,8 @@
+# Development-only SQL Server password, defined once: the db service uses it as the SA password and the app
+# container receives it as CRM_SQL_PASSWORD (make doctor, post-create, Crm.Platform.Testing.SqlFixture).
+# Never used outside the devcontainer; Azure uses managed identity (CLAUDE.md security rules).
+x-dev-sql-password: &dev-sql-password "Dev_Only_Passw0rd!"
+
 services:
   app:
     build:
@@ -6,6 +11,9 @@ services:
     volumes:
       - ..:/workspaces/crm:cached
     command: sleep infinity
+    environment:
+      CRM_SQL_USER: sa
+      CRM_SQL_PASSWORD: *dev-sql-password
     depends_on:
       db:
         condition: service_healthy
@@ -14,7 +22,7 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "Dev_Only_Passw0rd!"   # development container only
+      MSSQL_SA_PASSWORD: *dev-sql-password
     ports:
       - "1433:1433"
     volumes:
