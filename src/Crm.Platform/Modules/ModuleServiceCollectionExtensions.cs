@@ -20,6 +20,8 @@ public static class ModuleServiceCollectionExtensions
             mvc.AddApplicationPart(module.ControllersAssembly);
         }
 
+        RequestHandlerValidation.ThrowIfInvalid(services, registry);
+
         return services;
     }
 }

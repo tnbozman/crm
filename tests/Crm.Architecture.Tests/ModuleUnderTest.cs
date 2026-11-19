@@ -11,9 +11,7 @@ internal sealed record ModuleUnderTest(IModule Module, Assembly Implementation, 
 
     public static ModuleUnderTest From(IModule module)
     {
-        var implementation = module.GetType().Assembly;
-        var contracts = Assembly.Load(implementation.GetName().Name + ".Contracts");
-        return new ModuleUnderTest(module, implementation, contracts);
+        return new ModuleUnderTest(module, module.GetType().Assembly, module.ContractsAssembly);
     }
 }
 

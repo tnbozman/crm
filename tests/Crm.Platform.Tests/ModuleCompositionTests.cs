@@ -1,3 +1,4 @@
+using Crm.Platform.Messaging;
 using Crm.Platform.Modules;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -66,6 +67,30 @@ public sealed class ModuleCompositionTests
         services.AddControllers().AddApplicationPart(typeof(InternalTestController).Assembly); // a part, but not a module
 
         DiscoveredControllers(services).ShouldNotContain(typeof(InternalTestController));
+    }
+
+    [Fact]
+    public void Startup_RequestWithNoHandler_FailsValidation()
+    {
+        var module = new TestModule("Directory", contractsAssembly: typeof(EchoQuery).Assembly);
+
+        var exception = Should.Throw<InvalidOperationException>(
+            () => new ServiceCollection().AddModules(new ModuleRegistry([module]), EmptyConfiguration));
+
+        exception.Message.ShouldContain("Crm.Platform.Tests.EchoQuery has no handler");
+    }
+
+    [Fact]
+    public void Startup_RequestWithTwoHandlers_FailsValidation()
+    {
+        var module = new TestModule("Directory", contractsAssembly: typeof(EchoQuery).Assembly, addServices: services => services
+            .AddRequestHandler<EchoQueryHandler>()
+            .AddRequestHandler<EchoQueryHandler>());
+
+        var exception = Should.Throw<InvalidOperationException>(
+            () => new ServiceCollection().AddModules(new ModuleRegistry([module]), EmptyConfiguration));
+
+        exception.Message.ShouldContain("Crm.Platform.Tests.EchoQuery has 2 handlers");
     }
 
     private static List<Type> DiscoveredControllers(ServiceCollection services)
