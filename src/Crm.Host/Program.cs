@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddProblemDetails();
+
 builder.Services
     .AddAuthentication(NoSignInAuthenticationHandler.SchemeName)
     .AddScheme<AuthenticationSchemeOptions, NoSignInAuthenticationHandler>(NoSignInAuthenticationHandler.SchemeName, configureOptions: null);
@@ -15,6 +17,7 @@ builder.Services.AddAuthorizationBuilder()
 
 var app = builder.Build();
 
+app.UseStatusCodePages();
 app.UseAuthentication();
 app.UseAuthorization();
 
