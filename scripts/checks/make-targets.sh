@@ -32,6 +32,14 @@ while IFS= read -r line; do
     [[ "$line" =~ \$\(call\ todo,S[0-9]+-[0-9]+,[^,]+\)$ ]] || fail "stub without a story ID or message: $line"
 done < <(grep -n 'call todo' Makefile | grep -v '^[0-9]*:#')
 
+# D. No stub outlives its story: a stub must not name a story that is ticked in its sprint file.
+for story in $(grep -oE 'call todo,S[0-9]+-[0-9]+' Makefile | cut -d, -f2 | sort -u); do
+    sprint=$(printf 's%02d' "$(sed -E 's/^S([0-9]+)-.*/\1/' <<<"$story")")
+    if grep -qE "^### ✅ ${story} " docs/sprints/${sprint}-*.md 2>/dev/null; then
+        fail "Makefile still stubs $story, but $story is ticked in docs/sprints/${sprint}-*.md"
+    fi
+done
+
 echo ""
 if [[ $ERRORS -eq 0 ]]; then
     echo "make-targets: all checks passed."
