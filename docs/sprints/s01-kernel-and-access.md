@@ -45,7 +45,7 @@ The module system exists and is enforced by tests. A user signs in with Entra ID
 | S1-9 | S1-7 | Frontend session, route guards and shell |
 | S1-10 | S1-9 | Role administration API |
 
-### S1-1 Module contract and architecture tests (E46)
+### ✅ S1-1 Module contract and architecture tests (E46)
 
 Tests first (`Crm.Architecture.Tests`):
 - `ModuleImplementations_DoNotReference_OtherModuleImplementations`.
@@ -60,6 +60,8 @@ Tests first (`Crm.Architecture.Tests`):
 Implement: `IModule` (with `ControllersAssembly`, and a hook for registering mediator handlers and the outbox relay, used from S1-3), `ModuleRegistry`, host composition with `AddApplicationPart`, test helpers to load compiled models.
 
 Done when: tests fail before any module exists, pass with the Access module and the sample module.
+
+Evidence: [docs/evidence/s01/S1-1-module-contract.md](../evidence/s01/S1-1-module-contract.md); ADR-012. Split into S1-1a (module kernel), S1-1b (boundary rules) and S1-1c (layering rules). No shipped module exists yet, so every rule is also run against test-only fixture modules (`tests/Fixtures/Modules`: Sample obeys every rule, Rogue breaks each once). Module controllers and DTOs are internal and the platform discovers them (ADR-012). "Pass with the Access module" is confirmed in S1-6.
 
 ### S1-2 Current user and authorisation primitives (E2, E36)
 

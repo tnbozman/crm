@@ -65,7 +65,9 @@ SELECT session_id, program_name FROM sys.dm_exec_sessions WHERE database_id = DB
 
 ## Architecture tests
 
-`tests/Crm.Architecture.Tests` scans every production `Crm.*` assembly it references (add new module projects to its `.csproj`): solution layout, build gates, central package management, layering (controllers, services, models, DTOs), EF Core only in modules and the Migrator, and no `Migrate` calls in the host. `tests/Crm.Host.Tests/EndpointPolicyTests` checks the anonymous allow-list (ADR-011) against the live endpoint table.
+`tests/Crm.Architecture.Tests` scans every production `Crm.*` assembly it references (add new module projects to its `.csproj`): solution layout, build gates, central package management, layering (controllers, services, models, DTOs), EF Core only in modules and the Migrator, and no `Migrate` calls in the host.
+
+Module rules (S1-1) run on two sets: the shipped modules (`Crm.Host` `HostModules.All`), which must be clean, and two test-only fixture modules in `tests/Fixtures/Modules`. **Sample** obeys every rule; **Rogue** breaks each rule once. Each rule has a `_FlagsRogueOnly` test asserting it reports exactly Rogue's violation, so every rule is proven to fail as well as pass. When you add a module rule, add its violation to Rogue (see `tests/Fixtures/README.md`). The rules live in `ModuleRules` (references, Contracts content, visibility, DI registrations, DbContext and schema) and `LayeringRules` (controllers, services, models, DTOs, try/catch, folders). `DbContextModels.Load` builds a module's EF model without a database. `tests/Crm.Host.Tests/EndpointPolicyTests` checks the anonymous allow-list (ADR-011) against the live endpoint table.
 
 ## Frontend
 

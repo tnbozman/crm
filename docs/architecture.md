@@ -73,7 +73,8 @@ Rules:
 - Services throw typed domain exceptions (`NotFoundException`, `ConflictException`, `ValidationException`, `ForbiddenException`); a single exception filter in the platform maps them to RFC 9457 problem details. Controllers contain no try/catch.
 - Controllers use `[ApiController]`, attribute routing (`[Route("api/v1/<module>/<resource>")]`), `[Authorize]` with named policies, `CancellationToken` parameters, `ActionResult<T>` or `[ProducesResponseType]` for OpenAPI accuracy.
 - Models carry `OwnerTeamId`/`BusinessUnitId` where access-controlled; query filters live in the DbContext.
-- Module projects register their controllers with `AddApplicationPart` so `Crm.Host` finds them without reflection scanning of the whole app.
+- Module projects register their controllers with `AddApplicationPart` (through `IModule.ControllersAssembly` and `AddModules`) so `Crm.Host` finds them without reflection scanning of the whole app.
+- Every type in a module implementation is `internal` except its `IModule` class. Controllers and DTOs are internal too; `AddModules` adds a controller feature provider that discovers internal controllers in module assemblies only (ADR-012).
 
 ## 3. Module contract
 
@@ -174,3 +175,4 @@ The SQL fixture (`Crm.Platform.Testing.SqlFixture`) reads `CRM_SQL_SERVER`, `CRM
 | ADR-009 | Cross-module mediator | All cross-module calls through an in-house `IMediator`; Contracts hold only messages; each module owns its outbox, inbox and relay (**accepted**, S1 kickoff) |
 | ADR-010 | Package versions | Central package management; versions from the feed, logged with date (**accepted**, S0-2) |
 | ADR-011 | API access defaults | Deny by default; open only via named `HostPolicies`; anonymous unknown routes get 401 (**accepted**, S0-4) |
+| ADR-012 | Module type visibility | Only the `IModule` class is public in a module implementation; internal controllers discovered in module assemblies (**accepted**, S1-1) |

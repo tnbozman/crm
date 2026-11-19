@@ -67,6 +67,7 @@ Rules:
 
 - **Controller → Service → DbContext/Models.** Controllers accept and return DTOs only; they never reference `DbContext` or Models and hold no business logic.
 - **Services** hold business rules and transactions, are registered by interface, never reference `HttpContext` or ASP.NET MVC types, and never return Models to controllers (they return DTOs or Contracts DTOs).
+- **Everything in a module implementation is `internal`** except its `IModule` class: controllers, DTOs, services, models, mappers, handlers (ADR-012). The platform discovers internal controllers in module assemblies.
 - **Models** (EF entities) are `internal` to the module, enforce invariants through methods with private setters, and are never serialised or exposed.
 - **DTOs** are records in `Dtos/`; request DTOs are validated at the boundary; response DTOs never contain masked fields.
 - **Mapping** is explicit code in `Mapping/`; no reflection-based mapper unless an ADR approves one.
