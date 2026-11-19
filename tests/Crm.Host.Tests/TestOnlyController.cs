@@ -13,6 +13,8 @@ public sealed class TestOnlyController : ControllerBase
     public const string MissingPath = "/api/v1/test-only/missing";
     public const string MePath = "/api/v1/test-only/me";
     public const string AdminOnlyPath = "/api/v1/test-only/admin-only";
+    public const string ForbiddenPath = "/api/v1/test-only/forbidden";
+    public const string InvalidPath = "/api/v1/test-only/invalid";
 
     /// <summary>The signed-in user as services see it, through ICurrentUser.</summary>
     [HttpGet("me")]
@@ -36,6 +38,12 @@ public sealed class TestOnlyController : ControllerBase
     /// <summary>An unexpected failure the exception filter does not handle.</summary>
     [HttpGet("throws")]
     public IActionResult Throws() => throw new InvalidOperationException($"{TestHostFactory.ExceptionDetail} at {Request.Path}");
+
+    [HttpGet("forbidden")]
+    public IActionResult Forbidden() => throw new ForbiddenException($"Not for this user at {Request.Path}.");
+
+    [HttpGet("invalid")]
+    public IActionResult Invalid() => throw new RequestValidationException(new Dictionary<string, string[]> { ["Name"] = [$"Too long for {Request.Method}."] });
 
     [HttpGet("missing")]
     public IActionResult Missing() => throw new NotFoundException($"No test record at {Request.Path}.");
