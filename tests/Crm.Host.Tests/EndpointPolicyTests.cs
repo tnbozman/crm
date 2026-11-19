@@ -26,6 +26,10 @@ public sealed class EndpointPolicyTests(WebApplicationFactory<Program> factory, 
     ];
 
     [Fact]
+    public void All_Endpoints_HaveAuthorisation_OrAreInAnonymousAllowList() =>
+        EndpointsWithoutANamedPolicy(factory).ShouldBeEmpty("name a policy with [Authorize(Policy = ...)], or add the endpoint to AllowList with a reason");
+
+    [Fact]
     public void All_Endpoints_HaveAuthorisation_OrAreInAnonymousAllowList_FlagsEndpointsWithoutAPolicy()
     {
         var unprotected = EndpointsWithoutANamedPolicy(testHost);
