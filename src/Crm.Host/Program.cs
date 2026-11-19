@@ -1,4 +1,3 @@
-using Crm.Host;
 using Crm.Host.Security;
 using Crm.Platform.Errors;
 using Microsoft.AspNetCore.Authentication;
@@ -32,13 +31,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-var api = app.MapGroup("/api/v1");
-
-foreach (var endpoints in app.Services.GetServices<IApiEndpoints>())
-{
-    endpoints.Map(api);
-}
 
 // Unknown /api routes never fall through to the SPA: 404 problem details for signed-in callers,
 // 401 for anonymous ones through the fallback policy (ADR-011).
