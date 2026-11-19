@@ -6,7 +6,10 @@ public static class MessagingServiceCollectionExtensions
 {
     public static IServiceCollection AddMediator(this IServiceCollection services)
     {
-        services.AddScoped<IMediator, Mediator>();
+        services.AddScoped<Mediator>();
+        services.AddScoped<IMediator>(sp => sp.GetRequiredService<Mediator>());
+        services.AddScoped<IEventPublisher>(sp => sp.GetRequiredService<Mediator>());
+        EventTypesIn(services);
         return services;
     }
 
@@ -21,5 +24,33 @@ public static class MessagingServiceCollectionExtensions
         }
 
         return services;
+    }
+
+    /// <summary>Registers <typeparamref name="TSubscriber"/> for every integration event it handles. Call from IModule.AddServices.</summary>
+    public static IServiceCollection AddEventSubscriber<TSubscriber>(this IServiceCollection services)
+        where TSubscriber : class
+    {
+        var eventTypes = EventTypesIn(services);
+        foreach (var subscriberInterface in typeof(TSubscriber).GetInterfaces()
+            .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEventSubscriber<>)))
+        {
+            services.AddScoped(subscriberInterface, typeof(TSubscriber));
+            eventTypes.Add(subscriberInterface.GetGenericArguments()[0]);
+        }
+
+        return services;
+    }
+
+    /// <summary>The one EventTypes instance for this service collection, added on first use.</summary>
+    private static EventTypes EventTypesIn(IServiceCollection services)
+    {
+        if (services.FirstOrDefault(d => d.ServiceType == typeof(EventTypes))?.ImplementationInstance is EventTypes existing)
+        {
+            return existing;
+        }
+
+        var eventTypes = new EventTypes();
+        services.AddSingleton(eventTypes);
+        return eventTypes;
     }
 }
