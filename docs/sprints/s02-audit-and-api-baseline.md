@@ -38,7 +38,7 @@ Tests first:
 - `ReadOfProtectedRecord_EmitsAccessAudit` (opt-in attribute for later probity and finance records).
 - `AuditFailure_DoesNotFailTheBusinessTransaction_ButRaisesAlert` or the opposite; choose, write the ADR, test the choice (default: audit via outbox in the same transaction so both succeed or both fail).
 
-Implement: `AuditInterceptor` in the platform kernel writing an audit integration event to the module outbox; Audit module consumes it.
+Implement: an audit `SaveChanges` hook in each module (from the scaffolder template, not the platform kernel; ADR-009) writing an audit integration event to the module's own outbox; Audit module consumes it through the mediator.
 
 ### S2-3 Authentication and administrative event audit (E3, E36)
 

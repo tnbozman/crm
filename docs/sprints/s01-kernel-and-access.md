@@ -25,20 +25,22 @@ The module system exists and is enforced by tests. A user signs in with Entra ID
 - S1-2 comes before S1-3 because the outbox stories need two modules with DbContexts and migrations, which the scaffolder (with the Migrator and the SQL fixture migrations step) produces.
 - S1-8 comes before S1-7 because the frontend's antiforgery header, cookie session and Playwright journeys depend on the server-side headers, cookies and antiforgery.
 - S1-2, S1-3 and S1-5 are expected to be split (~400-line guideline). S1-9, and possibly S1-7's Playwright work, are the candidates to slip to S2 given reduced Christmas capacity.
-- Decisions needed during the sprint: EF Core in `Crm.Platform` for the outbox, which conflicts with the S0-9 architecture rule (ADR needed); the idle session limit (S1-7, business owner).
+- Decided at kickoff: cross-module communication only through an in-house `IMediator`; Contracts hold only messages; each module owns its outbox, inbox and relay, so `Crm.Platform` stays free of EF Core and the S0-9 rule is unchanged (ADR-009). S1-1 and S1-3 below reflect it.
+- Decision still needed: the idle session limit (S1-7, business owner).
 
 ### S1-1 Module contract and architecture tests (E46)
 
 Tests first (`Crm.Architecture.Tests`):
 - `ModuleImplementations_DoNotReference_OtherModuleImplementations`.
 - `Contracts_Assemblies_DoNotReference_EfCore`.
-- `Contracts_Assemblies_ContainOnlyInterfacesRecordsEventsAndConstants`.
+- `Contracts_Assemblies_ContainOnlyMessagesDtosAndConstants` (query, command and event records, response DTOs, constants; no interfaces; ADR-009).
+- `Modules_DoNotResolve_OtherModulesServices` (a module's service implementations and interfaces are internal; only Contracts types cross the boundary).
 - `EachModule_HasOneDbContext_WithDefaultSchemaEqualToModuleSchema` (scans compiled model).
 - `Module_Types_AreInternalUnlessInContracts`.
-- Layering: `Controllers_DoNotReference_DbContextOrModels`, `Controllers_OnlyDependOnServiceInterfacesAndDtos`, `Services_DoNotReference_HttpContextOrMvcTypes`, `Models_AreInternalAndNotUsedInDtosOrControllerSignatures`, `Dtos_DoNotReference_Models`, `Controllers_HaveNoTryCatch` (IL or source scan), `ModuleFolders_Follow_ControllersServicesDtosModelsPersistence`.
+- Layering: `Controllers_DoNotReference_DbContextOrModels`, `Controllers_OnlyDependOnServiceInterfacesAndDtos`, `Services_DoNotReference_HttpContextOrMvcTypes`, `Models_AreInternalAndNotUsedInDtosOrControllerSignatures`, `Dtos_DoNotReference_Models`, `Controllers_HaveNoTryCatch` (IL or source scan), `ModuleFolders_Follow_ControllersServicesDtosModelsPersistenceHandlers`.
 - `Host_ModulesList_MatchesModuleProjects`.
 
-Implement: `IModule` (with `ControllersAssembly`), `ModuleRegistry`, host composition with `AddApplicationPart`, test helpers to load compiled models.
+Implement: `IModule` (with `ControllersAssembly`, and a hook for registering mediator handlers and the outbox relay, used from S1-3), `ModuleRegistry`, host composition with `AddApplicationPart`, test helpers to load compiled models.
 
 Done when: tests fail before any module exists, pass with the Access module and the sample module.
 
@@ -46,23 +48,34 @@ Done when: tests fail before any module exists, pass with the Access module and 
 
 Tests first: `scripts/checks/new-module.sh` runs `make module-new name=Zzz` in a temp copy, then `dotnet build` and `make test-arch` succeed; the generated module has Contracts, implementation, test project, DbContext, initial migration, endpoints stub, `Skills/` folder and web feature folder.
 
-Implement: `scripts/new-module.sh` with templates (Controllers, Services, Dtos, Models, Persistence, Mapping, Validation, Events folders each with one example class and tests) under `scripts/templates/module/`; adds projects to the solution, host module list and Migrator.
+Implement: `scripts/new-module.sh` with templates (Controllers, Services, Dtos, Models, Persistence, Mapping, Validation, Handlers folders each with one example class and tests; S1-3 adds the outbox, inbox and relay to Persistence) under `scripts/templates/module/`; adds projects to the solution, host module list and Migrator.
 
 Done when: the scaffolder is used to create Access in S1-5 (dog-food).
 
-### S1-3 Domain events, outbox and inbox (E46)
+### S1-3 Mediator, module outbox and inbox (E46)
 
-Tests first (persistence, real SQL):
+Design: ADR-009. Split into S1-3a (mediator, no I/O) and S1-3b (module-owned outbox, inbox and relay, in the scaffolder templates).
+
+S1-3a tests first (unit, `Crm.Platform`):
+- `Send_Query_InvokesTheSingleHandler_AndReturnsItsResponse`.
+- `Send_WithNoHandler_Throws` and `Startup_RequestWithNoOrTwoHandlers_FailsValidation`.
+- `Publish_Event_InvokesEveryHandler`.
+- `Pipeline_RunsInOrder_CorrelationLoggingValidationAuthorisation`.
+- `Send_RunsInCallersScope_CurrentUserIsTheSignedInUser`.
+- Architecture: `EachRequest_HasExactlyOneHandler_InOwningModule`, `Services_DoNotCall_MediatorPublish` (the S0-9 EF Core rule already keeps `Crm.Platform` free of EF Core).
+
+S1-3b tests first (persistence, real SQL; written once as a conformance suite in `Crm.Platform.Testing` and run by each module's test project against its own `DbContext`):
 - `Outbox_Message_IsWrittenInSameTransactionAsEntityChange` (roll back → no message).
-- `Dispatcher_PublishesPendingMessages_ToSubscribers_AndMarksProcessed`.
-- `Dispatcher_Retries_FailedHandler_WithBackoff_ThenDeadLetters`.
-- `Handler_ReceivingSameMessageTwice_RunsOnce` (inbox).
-- `TwoDispatchers_OnlyOneProcesses` (`sp_getapplock`).
-- `Dispatcher_ResumesAfterRestart_WithoutLosingMessages`.
+- `Relay_PublishesPendingMessages_ThroughMediator_AndMarksProcessed`.
+- `Relay_Retries_FailedHandler_WithBackoff_ThenDeadLetters`.
+- `Handler_ReceivingSameMessageTwice_RunsOnce` (inbox in the subscriber's schema).
+- `TwoRelays_ForSameModule_OnlyOneProcesses` (`sp_getapplock`, per-module resource).
+- `Relay_ResumesAfterRestart_WithoutLosingMessages`.
+- `scripts/checks/module-outbox-drift.sh` (in `make verify`) fails on a planted change to one module's outbox code.
 
-Implement: `IIntegrationEvent`, `IOutbox`, `OutboxInterceptor` or `SaveChanges` hook per module context, `IEventHandler<T>`, `InboxGuard`, hosted `OutboxDispatcher` in `Crm.Platform`. Message envelope: ID, type, occurred-at, payload JSON, correlation ID, causation ID.
+Implement: in `Crm.Platform` (no EF Core): `IMediator`, `IQuery<T>`, `ICommand<T>`, `IIntegrationEvent`, `IRequestHandler<,>`, `IEventHandler<T>`, pipeline behaviours, handler registration through `IModule`, message envelope (ID, type, occurred-at, payload JSON, correlation ID, causation ID, originating user ID). In `scripts/templates/module/Persistence/`: outbox and inbox entities and configuration, `SaveChanges` hook, `IOutbox` (module-internal), inbox guard, hosted relay. Regenerate the sample modules from the template.
 
-Done when: two sample modules exchange an event in an API-level test.
+Done when: two sample modules exchange a query and an event through the mediator in an API-level test, with neither referencing the other's implementation.
 
 ### S1-4 Current user and authorisation primitives (E2, E36)
 

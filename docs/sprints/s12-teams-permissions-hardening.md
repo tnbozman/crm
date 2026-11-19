@@ -47,7 +47,7 @@ Tests first:
 - `Share_IsAudited`
 - `SharedRecord_AppearsInSearchOnlyForGrantee`
 
-Implement: Share entries in Access consulted by module query filters through a Contracts interface.
+Implement: Share entries in Access consulted by module query filters through an Access Contracts query sent with `IMediator` (ADR-009).
 
 Done when: tested across Directory and Deals.
 

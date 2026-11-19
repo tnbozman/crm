@@ -10,19 +10,19 @@ One deployable (Azure App Service) and one Azure SQL database, built from module
 src/
   Crm.Host/                  composition root, endpoints mapping, serves wwwroot
   Crm.Migrator/              console app; applies every module's migrations
-  Crm.Platform/              kernel: IModule, event bus, outbox/inbox, ICurrentUser, auth, AI abstractions
-  Crm.Platform.Testing/      SQL fixture, fake auth, builders, event-bus test double
+  Crm.Platform/              kernel (no EF Core): IModule, IMediator and pipeline, message envelope, ICurrentUser, auth, AI abstractions
+  Crm.Platform.Testing/      SQL fixture, fake auth, builders, mediator test double, outbox conformance suite
   Modules/<Module>/
-    Crm.<Module>.Contracts/  public API of the module (interfaces, DTOs, events) for other modules
+    Crm.<Module>.Contracts/  public API of the module: query, command and event records, response DTOs, constants (no interfaces)
     Crm.<Module>/            internal implementation, layered by folder:
       Controllers/           ASP.NET Core controllers: HTTP only, thin
       Services/              business logic and transactions (interface + implementation)
       Dtos/                  request and response DTOs for this module's HTTP API
       Models/                EF Core entity classes (never leave the module)
-      Persistence/           DbContext, IEntityTypeConfiguration classes, Migrations
+      Persistence/           DbContext, IEntityTypeConfiguration classes, Migrations, outbox, inbox and relay
       Mapping/               explicit mappers between Models and DTOs
       Validation/            request validators
-      Events/                handlers for integration events
+      Handlers/              mediator handlers: this module's Contracts queries and commands, other modules' integration events
       Skills/                AI skills and tools (R6)
   web/                       Vue 3 app (Vite)
 tests/
@@ -60,14 +60,15 @@ HTTP request → Controller → Service → DbContext (Models) → SQL Server
 | Layer | Responsibility | May reference | Must not |
 | --- | --- | --- | --- |
 | Controller | Routing, authorisation attributes, model binding, status codes, calling one service method, returning DTOs | Services (interfaces), Dtos, `ICurrentUser` | Touch `DbContext` or Models; contain business rules; catch exceptions to shape errors (a filter does that) |
-| Service | Business rules, orchestration, transactions, raising outbox events, calling other modules through Contracts | `DbContext`, Models, Dtos, Mapping, other modules' Contracts | Reference `HttpContext`, controllers or ASP.NET types; return Models to controllers |
+| Service | Business rules, orchestration, transactions, writing integration events to the module's outbox, sending other modules' Contracts queries and commands through `IMediator` | `DbContext`, Models, Dtos, Mapping, `IMediator`, other modules' Contracts | Reference `HttpContext`, controllers or ASP.NET types; return Models to controllers; call `IMediator.Publish`; inject another module's services |
 | DTO | Shape of the HTTP contract: records with data annotations or validators, no behaviour | Nothing | Reference Models |
 | Model | EF Core entity: state plus invariants enforced through methods; private setters, no public parameterless constructor outside EF | Nothing outside the module | Be serialised or returned from any API; be used by other modules |
 | Mapper | Explicit static or injected mapping code (no reflection mapper by default) | Models, Dtos | Contain logic or queries |
+| Handler | Entry point for this module's Contracts queries and commands, and for other modules' integration events; thin, delegates to services | Services (interfaces), Contracts, inbox | Contain business rules; touch another module's anything except its Contracts |
 
 Rules:
 - No generic repository. Services use the module's `DbContext` directly; this keeps queries explicit and testable against real SQL.
-- Services expose an interface (`IOrganisationService`) used by controllers. Cross-module access goes through a separate **Contracts facade** (`IDirectoryQueries`) implemented in the module, usually delegating to its services. Contracts DTOs are distinct from API DTOs.
+- Services expose an interface (`IOrganisationService`) used by controllers and handlers inside the module. Cross-module access is a Contracts message (`GetOrganisationSummary : IQuery<OrganisationSummary>`) sent through `IMediator` and handled in the owning module by a thin handler that delegates to its services (ADR-009). Contracts DTOs are distinct from API DTOs.
 - Queries project to DTOs (`Select`) rather than loading whole Models where the response is read-only.
 - Services throw typed domain exceptions (`NotFoundException`, `ConflictException`, `ValidationException`, `ForbiddenException`); a single exception filter in the platform maps them to RFC 9457 problem details. Controllers contain no try/catch.
 - Controllers use `[ApiController]`, attribute routing (`[Route("api/v1/<module>/<resource>")]`), `[Authorize]` with named policies, `CancellationToken` parameters, `ActionResult<T>` or `[ProducesResponseType]` for OpenAPI accuracy.
@@ -106,12 +107,17 @@ public interface IModule
 
 | Need | Mechanism |
 | --- | --- |
-| Ask another module for data | Contracts query interface, in-process |
-| Tell other modules something changed | Integration event through the module's outbox |
-| Cross-module screen (for example organisation overview) | Composition in `Crm.Host` calling several Contracts interfaces; never a cross-schema join |
+| Ask another module for data | `IMediator.Send` with the owning module's Contracts query, in-process |
+| Ask another module to do something now | `IMediator.Send` with a Contracts command; its own transaction, idempotent handler, never inside the caller's transaction; prefer events |
+| Tell other modules something changed | Integration event through the module's own outbox; its relay calls `IMediator.Publish` after the commit |
+| Cross-module screen (for example organisation overview) | Composition in `Crm.Host` sending several Contracts queries; never a cross-schema join |
 | Cross-module consistency | Eventual, through events with idempotent handlers (inbox table per subscriber) |
 
-Outbox: each module has `outbox_messages` in its schema, written in the same transaction as the change. A hosted dispatcher in `Crm.Platform` polls all modules' outboxes, takes `sp_getapplock` so only one instance dispatches, publishes to in-process handlers, and marks messages done. Handlers record processed message IDs in an `inbox_messages` table in the subscriber's schema.
+There is no other channel between modules: no injected services from another module, no shared persistence code (ADR-009).
+
+Mediator: `IMediator` in `Crm.Platform` is written in-house. Every `Send` and `Publish` runs a pipeline: correlation and causation IDs, structured logging (IDs only), validation, authorisation as the current user, and audit of permission-relevant reads (S2). Each request type has exactly one handler, in the module that owns it; startup fails otherwise.
+
+Outbox: each module owns `outbox_messages` and `inbox_messages` in its schema, mapped in its own `DbContext`. Outbox rows are written by a `SaveChanges` hook in the same transaction as the change. A hosted relay registered by the module reads only its own outbox, takes `sp_getapplock` on a per-module resource so one instance relays, calls `IMediator.Publish`, retries with backoff, dead-letters, and marks messages done. Subscribers record processed message IDs in their own inbox in the same transaction as their change. The scaffolder generates this code; a conformance suite in `Crm.Platform.Testing` and a drift check in `make verify` keep the copies identical.
 
 ## 6. Identity and access
 
@@ -136,7 +142,7 @@ Outbox: each module has `outbox_messages` in its schema, written in the same tra
 - Microsoft Agent Framework hosted in `Crm.Assistant`. Providers behind `IChatClient`: Azure OpenAI, OpenAI, Anthropic (direct), Claude in Microsoft Foundry. Config key `Ai:Provider`.
 - Production default is Azure OpenAI in an Australian region over a private endpoint with Entra authentication. Direct OpenAI and Anthropic APIs are for development with synthetic data; startup validation blocks them in Production unless `Ai:AllowExternalProviders=true` is set after approval.
 - Skills: `SKILL.md` files per module (`src/Modules/<Module>/Crm.<Module>/Skills/`), loaded by role through the Agent Framework skills provider. Script execution is disabled.
-- Tools: typed C# functions calling module Contracts as the signed-in user. Reads run freely; writes return a proposal that the user approves in the UI.
+- Tools: typed C# functions sending module Contracts queries and commands through `IMediator` as the signed-in user. Reads run freely; writes return a proposal that the user approves in the UI.
 - Prompts and tool calls are audited. Records with handling markers are never sent to a model.
 
 ## 9. Testing architecture
@@ -165,6 +171,6 @@ The SQL fixture (`Crm.Platform.Testing.SqlFixture`) reads `CRM_SQL_SERVER`, `CRM
 | ADR-006 | Search | SQL `LIKE` over normalised columns for MVP; evaluate full-text in S7 |
 | ADR-007 | PDF generation (quotes) | Decide in S14; check licence terms first |
 | ADR-008 | AI providers in production | Azure OpenAI (AU region); direct APIs development-only |
-| ADR-009 | Mediator library | None; small in-house dispatcher |
+| ADR-009 | Cross-module mediator | All cross-module calls through an in-house `IMediator`; Contracts hold only messages; each module owns its outbox, inbox and relay (**accepted**, S1 kickoff) |
 | ADR-010 | Package versions | Central package management; versions from the feed, logged with date (**accepted**, S0-2) |
 | ADR-011 | API access defaults | Deny by default; open only via named `HostPolicies`; anonymous unknown routes get 401 (**accepted**, S0-4) |
