@@ -1,17 +1,13 @@
-using System.Security.Claims;
-using System.Text.Encodings.Web;
-using Microsoft.AspNetCore.Authentication;
+using Crm.Platform.Testing;
+using Crm.Platform.Testing.Builders;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Crm.Host.Tests;
 
 /// <summary>The real host plus the test-only controller (<see cref="TestOnlyController"/>).</summary>
-public sealed class TestHostFactory : WebApplicationFactory<Program>
+public sealed class TestHostFactory : TestWebAppFactory<Program>
 {
     public const string ProtectedPath = "/api/v1/test-only/protected";
     public const string ThrowingPath = "/api/v1/test-only/throws";
@@ -21,26 +17,7 @@ public sealed class TestHostFactory : WebApplicationFactory<Program>
         builder.ConfigureTestServices(services =>
             services.AddControllers().AddApplicationPart(typeof(TestOnlyController).Assembly));
 
-    /// <summary>A client whose requests are authenticated as a test user (replaced by FakeAuthHandler in S0-9).</summary>
+    /// <summary>A client signed in as a synthetic user with no roles.</summary>
     public HttpClient CreateSignedInClient(string environment = "Development") =>
-        WithWebHostBuilder(builder => builder
-                .UseEnvironment(environment)
-                .ConfigureTestServices(services => services
-                    .AddAuthentication(SignedInHandler.SchemeName)
-                    .AddScheme<AuthenticationSchemeOptions, SignedInHandler>(SignedInHandler.SchemeName, configureOptions: null)))
-            .CreateClient();
-
-    private sealed class SignedInHandler(
-        IOptionsMonitor<AuthenticationSchemeOptions> options,
-        ILoggerFactory logger,
-        UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
-    {
-        public const string SchemeName = "TestSignedIn";
-
-        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
-        {
-            var identity = new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, "test-user")], SchemeName);
-            return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName)));
-        }
-    }
+        CreateClientFor(new TestUserBuilder().Build(), environment);
 }

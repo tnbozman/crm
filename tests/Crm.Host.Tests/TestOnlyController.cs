@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Crm.Platform.Errors;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,6 +10,15 @@ namespace Crm.Host.Tests;
 public sealed class TestOnlyController : ControllerBase
 {
     public const string MissingPath = "/api/v1/test-only/missing";
+    public const string MePath = "/api/v1/test-only/me";
+
+    /// <summary>The signed-in user as the authentication scheme sees it (until S1 adds ICurrentUser).</summary>
+    [HttpGet("me")]
+    public IActionResult Me() => Ok(new
+    {
+        Id = User.FindFirstValue(ClaimTypes.NameIdentifier),
+        Roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).Order(StringComparer.Ordinal).ToArray(),
+    });
 
     /// <summary>No policy: the fallback policy must protect it.</summary>
     [HttpGet("protected")]
