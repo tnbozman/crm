@@ -25,4 +25,14 @@ public sealed class ModuleBoundaryTests
     [Fact]
     public void Contracts_Assemblies_DoNotReference_EfCore_FlagsRogueOnly() =>
         ModuleRules.ContractsReferencesToEfCore(FixtureModules.All).ShouldBe(["Fixture.Rogue.Contracts references Microsoft.EntityFrameworkCore"]);
+
+    [Fact]
+    public void Contracts_Assemblies_ContainOnlyMessagesDtosAndConstants() =>
+        ModuleRules.ContractsTypesThatAreNotMessagesDtosOrConstants(ShippedModules.All).ShouldBeEmpty();
+
+    [Fact]
+    public void Contracts_Assemblies_ContainOnlyMessagesDtosAndConstants_FlagsRogueOnly() =>
+        ModuleRules.ContractsTypesThatAreNotMessagesDtosOrConstants(FixtureModules.All).ShouldBe(
+            ["Fixture.Rogue.Contracts.IRogueQueries is an interface", "Fixture.Rogue.Contracts.RogueCalculator is a class, not a record"],
+            ignoreOrder: true);
 }
