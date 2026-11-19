@@ -2,8 +2,8 @@ using Crm.Host;
 using Crm.Host.Security;
 using Crm.Platform.Errors;
 using Crm.Platform.Modules;
+using Crm.Platform.Security;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,8 +16,7 @@ builder.Services
     .AddAuthentication(NoSignInAuthenticationHandler.SchemeName)
     .AddScheme<AuthenticationSchemeOptions, NoSignInAuthenticationHandler>(NoSignInAuthenticationHandler.SchemeName, configureOptions: null);
 
-builder.Services.AddAuthorizationBuilder()
-    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
+builder.Services.AddCrmAuthorization()
     .AddPolicy(HostPolicies.Anonymous, policy => policy.RequireAssertion(_ => true));
 
 var app = builder.Build();
