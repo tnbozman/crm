@@ -44,3 +44,9 @@ The S0-4 unit tests `GetUnknownApiRoute_Returns404ProblemDetails` and `GetUnknow
 
 - `http://localhost:5000` serves without redirecting to HTTPS. HTTPS redirection and HSTS belong to S1-8 (security headers).
 - `make test-int` needs a frontend build first (it uses `SkipFrontend=true`). `make verify` builds before it tests, and a missing build fails with a clear message.
+
+## Bug found after S0-7 (fixed during S0-8 close-out, 2026-11-19)
+
+- `dotnet build` failed after any frontend change that renamed the hashed bundle: `DefineStaticWebAssets: No file exists for the asset … wwwroot/assets/index-<old hash>.js`. MSBuild listed the previous build's `wwwroot` files as static web assets at evaluation, then `BuildFrontend` (Vite with `emptyOutDir`) replaced them. The S0-7 incremental check only used `touch`, which keeps the hashes, so it missed this.
+- Reproduced first: `frontend-incremental.sh` now edits `HomeView.vue`, builds, reverts and builds again. It failed with the error above.
+- Fix: `<Content Remove="wwwroot\**" />` in `Crm.Host.csproj`, so generated files are not static web assets. The host serves them from disk, and publish still includes them (`publish-contains-spa.sh` passes).
