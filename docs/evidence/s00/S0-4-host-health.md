@@ -30,6 +30,8 @@ Each was seen failing first for the stated reason (404; 200 instead of 401; empt
 - `make api-client-check` (part of `make verify`) fails when the committed `openapi/Crm.Host.json` differs from the regenerated one. Seen failing with a planted stale title, and passing once the document was restored.
 - Real host smoke test (`dotnet run`, HTTP on loopback): `GET /api/v1/health` returns 200 `{"status":"ok"}`. `GET /api/v1/nope` without a sign-in returns 401 `application/problem+json`.
 
+Design decisions confirmed in review: [ADR-011](../../adr/011-api-access-defaults.md).
+
 ## Interim measures (tracked)
 
 - The authentication scheme `NoSignIn` never authenticates anyone. It exists so that the fallback policy answers 401 instead of failing. Entra ID replaces it in S1-5. It accepts no credentials and holds no secrets.

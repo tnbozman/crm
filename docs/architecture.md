@@ -133,3 +133,4 @@ The SQL fixture reads `CRM_SQL_SERVER` (devcontainer: the `db` service; CI: serv
 | ADR-008 | AI providers in production | Azure OpenAI (AU region); direct APIs development-only |
 | ADR-009 | Mediator library | None; small in-house dispatcher |
 | ADR-010 | Package versions | Central package management; versions from the feed, logged with date (**accepted**, S0-2) |
+| ADR-011 | API access defaults | Deny by default; open only via named `HostPolicies`; anonymous unknown routes get 401 (**accepted**, S0-4) |
