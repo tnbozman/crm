@@ -42,7 +42,7 @@ build-web:       ## frontend only
 	pnpm --dir $(WEB) build
 
 run:             ## run the host serving the built frontend (https://localhost:5001)
-	$(call todo,S0-7,make run serves the built SPA from Crm.Host)
+	dotnet run --project $(HOST) --launch-profile https
 
 dev:             ## backend watch + Vite dev server with proxy
 	$(call todo,S0-8,make dev runs dotnet watch and the Vite dev server)

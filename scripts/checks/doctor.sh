@@ -31,6 +31,13 @@ for tool in node pnpm make sqlcmd git; do
     fi
 done
 
+# ASP.NET Core HTTPS development certificate (make run serves https://localhost:5001)
+if dotnet dev-certs https --check &>/dev/null; then
+    pass "HTTPS development certificate present"
+else
+    fail "no HTTPS development certificate (post-create runs: dotnet dev-certs https)"
+fi
+
 # ---------------------------------------------------------------------------
 # SQL Server connectivity
 # ---------------------------------------------------------------------------

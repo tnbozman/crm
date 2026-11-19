@@ -7,6 +7,9 @@ cd /workspaces/crm
 echo "==> Restoring dotnet local tools..."
 dotnet tool restore
 
+echo "==> Creating the ASP.NET Core HTTPS development certificate (no-op if present)..."
+dotnet dev-certs https
+
 echo "==> Enabling corepack (pnpm)..."
 corepack enable
 
