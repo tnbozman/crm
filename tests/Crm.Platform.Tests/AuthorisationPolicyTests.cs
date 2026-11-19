@@ -21,6 +21,17 @@ public sealed class AuthorisationPolicyTests
         (await authorisation.AuthorizeAsync(SignedIn(), fallback)).Succeeded.ShouldBeTrue();
     }
 
+    [Fact]
+    public async Task RequireRole_Policy_ForbidsOtherRoles()
+    {
+        using var provider = BuildProvider();
+        var adminPolicy = await provider.GetRequiredService<IAuthorizationPolicyProvider>().GetPolicyAsync(Policies.Admin);
+        var authorisation = provider.GetRequiredService<IAuthorizationService>();
+
+        adminPolicy.ShouldNotBeNull();
+        (await authorisation.AuthorizeAsync(SignedIn(Roles.Sales, Roles.Finance), adminPolicy)).Succeeded.ShouldBeFalse();
+    }
+
     private static ServiceProvider BuildProvider()
     {
         var services = new ServiceCollection().AddLogging();
