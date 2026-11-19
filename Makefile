@@ -3,6 +3,7 @@ SHELL := /bin/bash
 SLN := Crm.slnx
 WEB := src/web
 HOST := src/Crm.Host
+OPENAPI := openapi/Crm.Host.json
 
 # dotnet test runs on Microsoft.Testing.Platform (ADR-003). Exit code 8 means "zero tests ran"
 # (a filter matched nothing in a project); real failures still exit non-zero.
@@ -75,8 +76,10 @@ format-check:    ## fail if formatting would change files
 	dotnet format $(SLN) --verify-no-changes
 	$(call todo,S0-5,Prettier check joins make format-check with the Vue app)
 
-api-client:      ## regenerate TypeScript API types from OpenAPI
-	$(call todo,S0-4,make api-client emits the OpenAPI document; S0-5 generates the TypeScript client)
+api-client:      ## regenerate the OpenAPI document (and TypeScript API types)
+	dotnet build $(HOST) -p:SkipFrontend=true -p:GenerateOpenApi=true
+	@jq -e '.paths["/api/v1/health"]' $(OPENAPI) >/dev/null || { echo "api-client: $(OPENAPI) missing or does not describe /api/v1/health" >&2; exit 1; }
+	$(call todo,S0-5,make api-client generates TypeScript types from $(OPENAPI))
 
 api-client-check: api-client   ## fail if generated client differs from committed
 	$(call todo,S0-5,make api-client-check diffs the generated client in $(WEB)/src/api)
