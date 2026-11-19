@@ -49,5 +49,6 @@ Queried with `pnpm view <pkg> version` on 2026-11-19. Each version is the latest
 | @vue/eslint-config-typescript / @vue/eslint-config-prettier | 14.9.0 / 10.2.0 | |
 | prettier / prettier-plugin-tailwindcss | 3.10.1 / 0.8.1 | |
 | jiti | 2.7.0 | loads `eslint.config.ts` |
+| openvue / @openvue/core | 1.1.1 / 1.1.1 | S0-6; `@openuxkit/*` 1.0.x–1.1.0 pinned by lockfile; bumps need a reviewed package diff (ADR-001) |
 
 Considered and not adopted: `Microsoft.NET.Test.Sdk` 18.12.0 and `xunit.runner.visualstudio` 4.0.1, which only VSTest needs (see ADR-003).

@@ -85,7 +85,7 @@ Done when: `pnpm lint`, `format:check`, `typecheck`, `test --run`, `build` all p
 
 Evidence: [docs/evidence/s00/S0-5-vue-app.md](../evidence/s00/S0-5-vue-app.md); ADR-002 (pnpm and release-age policy); npm baseline in ADR-010.
 
-### S0-6 OpenVue spike and UI foundation (E46, ADR-001)
+### ✅ S0-6 OpenVue spike and UI foundation (E46, ADR-001)
 
 Time-box: half a day for the spike, then implement.
 
@@ -96,6 +96,8 @@ Tests first:
 Implement: confirm the OpenVue package name, version, licence and that unstyled mode works with Tailwind; if not viable, document and switch to the in-house PrimeVue fork (see `/docs/adr/ADR-001`). Create `src/web/src/ui/` wrappers (`AppButton`, `AppInput`, `AppDialog`, `AppDataTable`) and a layout shell.
 
 Done when: ADR-001 written with decision and evidence; wrappers tested.
+
+Evidence: [docs/evidence/s00/S0-6-ui-foundation.md](../evidence/s00/S0-6-ui-foundation.md); decision in [ADR-001](../adr/001-ui-library.md).
 
 ### S0-7 .NET build builds and serves the frontend (E46)
 
