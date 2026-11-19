@@ -1,5 +1,6 @@
 using System.Reflection;
 using Crm.Platform.Modules;
+using Fixture.Sample.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,5 +14,7 @@ public sealed class SampleModule : IModule
 
     public void AddServices(IServiceCollection services, IConfiguration configuration)
     {
+        services.AddSingleton(TimeProvider.System);
+        services.AddScoped<ISampleService, SampleService>();
     }
 }

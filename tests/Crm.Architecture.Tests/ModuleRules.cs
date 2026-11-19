@@ -2,6 +2,8 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using Crm.Platform.Modules;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Crm.Architecture.Tests;
 
@@ -77,4 +79,33 @@ internal static class ModuleRules
                 && t.Namespace?.EndsWith(".Dtos", StringComparison.Ordinal) != true)
             .Select(t => t.FullName!)
             .ToList();
+
+    /// <summary>
+    /// A module's AddServices registers nothing from another module's implementation, as a service type,
+    /// an implementation type or a constructor dependency. Only Contracts types and the mediator cross modules.
+    /// </summary>
+    public static IReadOnlyList<string> RegistrationsOfOtherModulesTypes(IReadOnlyList<ModuleUnderTest> modules)
+    {
+        var configuration = new ConfigurationBuilder().Build();
+        var violations = new List<string>();
+
+        foreach (var module in modules)
+        {
+            var others = modules.Where(o => o != module).Select(o => o.Implementation).ToHashSet();
+            var services = new ServiceCollection();
+            module.Module.AddServices(services, configuration);
+
+            var referenced = services
+                .SelectMany(d => new[] { d.ServiceType, d.ImplementationType }
+                    .Concat(d.ImplementationType?.GetConstructors().SelectMany(c => c.GetParameters()).Select(p => p.ParameterType) ?? []))
+                .OfType<Type>()
+                .Where(t => others.Contains(t.Assembly))
+                .Select(t => $"{module.Name} registers {t.FullName}")
+                .Distinct(StringComparer.Ordinal);
+
+            violations.AddRange(referenced);
+        }
+
+        return violations;
+    }
 }
