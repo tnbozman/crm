@@ -1,7 +1,6 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Crm.Platform.Modules;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -69,15 +68,13 @@ internal static class ModuleRules
         || (type.IsValueType && type.GetMethod("PrintMembers", BindingFlags.NonPublic | BindingFlags.Instance)?.IsDefined(typeof(CompilerGeneratedAttribute)) == true);
 
     /// <summary>
-    /// Implementation types are internal, except the IModule class (the host creates it), controllers
-    /// (MVC discovers public controllers only) and API DTOs (public controller actions return them).
+    /// Implementation types are internal, except the IModule class, which the host creates. Controllers and DTOs
+    /// are internal too; the platform discovers internal controllers in module assemblies.
     /// </summary>
     public static IReadOnlyList<string> PublicImplementationTypes(IReadOnlyList<ModuleUnderTest> modules) =>
         modules
             .SelectMany(m => m.Implementation.GetExportedTypes())
-            .Where(t => !typeof(IModule).IsAssignableFrom(t)
-                && !typeof(ControllerBase).IsAssignableFrom(t)
-                && t.Namespace?.EndsWith(".Dtos", StringComparison.Ordinal) != true)
+            .Where(t => !typeof(IModule).IsAssignableFrom(t))
             .Select(t => t.FullName!)
             .ToList();
 

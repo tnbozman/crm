@@ -42,7 +42,8 @@ public sealed class ModuleBoundaryTests
 
     [Fact]
     public void Module_Types_AreInternalUnlessInContracts_FlagsRogueOnly() =>
-        ModuleRules.PublicImplementationTypes(FixtureModules.All).ShouldBe(["Fixture.Rogue.Services.RogueService"]);
+        ModuleRules.PublicImplementationTypes(FixtureModules.All).ShouldBe(
+            ["Fixture.Rogue.Dtos.RogueResponse", "Fixture.Rogue.Services.RogueService"], ignoreOrder: true);
 
     [Fact]
     public void Modules_DoNotResolve_OtherModulesServices() =>
