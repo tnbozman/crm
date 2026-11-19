@@ -125,7 +125,8 @@ Outbox: each module owns `outbox_messages` and `inbox_messages` in its schema, m
 - ASP.NET Core Identity is used **in external-login-only mode**: `AccessDbContext` derives from `IdentityDbContext`, users are created on first Entra sign-in, `PasswordHash` is always null, no password, reset or registration endpoints exist.
 - Sign-in: OpenID Connect to Entra ID (Microsoft.Identity.Web), cookie session (`SameSite=Strict`, `Secure`, `HttpOnly`), antiforgery token for state-changing calls from the SPA.
 - Authorisation: Entra **app roles** map to application roles. Teams and business units are managed in the Access module and assigned to users there (avoids the Entra group-overage limit).
-- `ICurrentUser` exposes user ID, roles, team IDs, business-unit IDs. Every module reads it from the Platform kernel.
+- `ICurrentUser` exposes user ID (GUID), roles, team IDs, business-unit IDs. Every module reads it from the Platform kernel. It is built once per scope from `IUserContext` (the request's user by default; work outside a request supplies its own principal). An authenticated principal without a GUID user ID fails closed.
+- Roles (`Admin`, `Sales`, `Delivery`, `Finance`, `Auditor`, `ReadOnly`) are constants in `Crm.Platform.Security.Roles`. `AddCrmAuthorization()` registers the fallback policy and one policy per role (`Policies.Admin` and so on); `AddRolePolicy` adds others. Endpoints use `[Authorize(Policy = Policies.X)]`. An architecture test requires every endpoint to name a policy unless it is on the allow-list (health, SPA shell, `/api` catch-all).
 - Service-to-service callers (R4) use Entra app registrations or managed identities with JWT bearer validation. No custom API keys.
 - Conditional Access (phishing-resistant MFA, compliant device) is configured in Entra and recorded as evidence in S3.
 

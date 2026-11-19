@@ -63,7 +63,7 @@ Done when: tests fail before any module exists, pass with the Access module and 
 
 Evidence: [docs/evidence/s01/S1-1-module-contract.md](../evidence/s01/S1-1-module-contract.md); ADR-012. Split into S1-1a (module kernel), S1-1b (boundary rules) and S1-1c (layering rules). No shipped module exists yet, so every rule is also run against test-only fixture modules (`tests/Fixtures/Modules`: Sample obeys every rule, Rogue breaks each once). Module controllers and DTOs are internal and the platform discovers them (ADR-012). "Pass with the Access module" is confirmed in S1-6.
 
-### S1-2 Current user and authorisation primitives (E2, E36)
+### ✅ S1-2 Current user and authorisation primitives (E2, E36)
 
 Tests first:
 - `CurrentUser_FromClaims_ExposesIdRolesTeamsAndBusinessUnits`.
@@ -72,6 +72,8 @@ Tests first:
 - Architecture: `All_Endpoints_HaveAuthorisation_OrAreInAnonymousAllowList` (allow-list: health).
 
 Implement: `ICurrentUser`, `IUserContext` accessor, role constants (`Admin`, `Sales`, `Delivery`, `Finance`, `Auditor`, `ReadOnly`; refine in R1), policy registration helpers.
+
+Evidence: [docs/evidence/s01/S1-2-current-user-and-authorisation.md](../evidence/s01/S1-2-current-user-and-authorisation.md). User IDs are GUIDs; teams and business units are `crm:` claims added by Access. The allow-list also holds the SPA shell and the `/api` catch-all, by ADR-011's design.
 
 ### S1-3 Mediator (E46)
 

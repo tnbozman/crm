@@ -41,6 +41,7 @@ Statuses: ☐ planned, ◐ in progress, ● implemented with evidence. Update th
 | Control theme | Stories |
 | --- | --- |
 | Module boundaries and layering as executable checks (3.1.1, 3.4.1, 3.13.2) | S1-1 ([evidence](evidence/s01/S1-1-module-contract.md)) |
+| Deny by default, role policies, endpoint policy check (3.1.1, 3.1.2, 3.1.5) | S1-2 ([evidence](evidence/s01/S1-2-current-user-and-authorisation.md)) |
 | No local passwords | S1-6, S1-7 |
 | Insert-only audit | S2-1, S2-2, S3-2 |
 | Log scrubbing | S2-4 |

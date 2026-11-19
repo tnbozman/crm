@@ -58,10 +58,11 @@ SELECT session_id, program_name FROM sys.dm_exec_sessions WHERE database_id = DB
 ## API tests: `TestWebAppFactory` and fake auth
 
 - `TestWebAppFactory<Program>` is the real host. A plain `CreateClient()` keeps the host's deny-by-default authentication, so use it for negative (anonymous) tests.
-- `CreateClientFor(user, environment = "Development")` signs every request in as `user` through `FakeAuthHandler` (claims: name identifier, name, email, roles).
-- `TestUserBuilder` makes synthetic users with Bogus: `new TestUserBuilder().WithRoles("Sales").Build()`. Never use real people or classified or CUI data (CLAUDE.md).
+- `CreateClientFor(user, environment = "Development")` signs every request in as `user` through `FakeAuthHandler` (claims: name identifier as a GUID, name, email, roles, and the CRM's `crm:team` and `crm:business_unit` claims).
+- `TestUserBuilder` makes synthetic users with Bogus: `new TestUserBuilder().WithRoles(Roles.Sales).WithTeams(teamId).WithBusinessUnits(unitId).Build()`. Never use real people or classified or CUI data (CLAUDE.md).
 - Test-only endpoints are controllers in the test assembly, added with `AddApplicationPart` (see `tests/Crm.Host.Tests/TestOnlyController.cs`).
-- S1 replaces reading claims directly with `ICurrentUser`. Fake auth stays the way tests sign in.
+- Code reads the user through `ICurrentUser` (S1-2), never claims or `HttpContext`. Fake auth stays the way tests sign in.
+- Every permission rule needs a negative test: sign in as a user without the role and assert 403 (see `ApiAuthorisationTests`).
 
 ## Architecture tests
 
