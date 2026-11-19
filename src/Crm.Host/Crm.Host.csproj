@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Crm.Host.Tests" />
+    <InternalsVisibleTo Include="Crm.Architecture.Tests" />
   </ItemGroup>
 
   <!-- The Vue app (src/web) is built into wwwroot by dotnet build. Skip with -p:SkipFrontend=true. -->
