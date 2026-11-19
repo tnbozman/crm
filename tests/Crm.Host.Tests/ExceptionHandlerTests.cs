@@ -5,10 +5,10 @@ using Xunit;
 
 namespace Crm.Host.Tests;
 
-public sealed class ExceptionFilterTests(TestHostFactory factory) : IClassFixture<TestHostFactory>
+public sealed class ExceptionHandlerTests(TestHostFactory factory) : IClassFixture<TestHostFactory>
 {
     [Fact]
-    public async Task ServiceException_IsConvertedToProblemDetails_ByExceptionFilter()
+    public async Task ServiceException_IsConvertedToProblemDetails_ByExceptionHandler()
     {
         using var client = factory.CreateSignedInClient("Production");
 
