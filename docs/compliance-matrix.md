@@ -9,7 +9,7 @@ Statuses: ☐ planned, ◐ in progress, ● implemented with evidence. Update th
 | Strategy | What applies to the CRM | Sprint | Evidence |
 | --- | --- | --- | --- |
 | Application control | Only the deployed signed build runs; App Service PaaS; pipeline-only deployment; no arbitrary code upload | S0, S3 | ☐ |
-| Patch applications | Dependency updates (NuGet, npm, Actions, runtime stack); critical fixes within the policy window; vulnerability gates | S0, S3, ongoing | ☐ |
+| Patch applications | Dependency updates (NuGet, npm, Actions, runtime stack); critical fixes within the policy window; vulnerability gates | S0, S3, ongoing | ◐ [S0-2](evidence/s00/S0-2-build-baseline.md), [S0-5](evidence/s00/S0-5-vue-app.md), [S0-6](evidence/s00/S0-6-ui-foundation.md) |
 | Configure Microsoft Office macro settings | Not applicable to the CRM; CSV export formula-injection protection | S7 | ☐ |
 | User application hardening | Strict CSP and security headers; no unsupported browsers beyond managed devices | S1 | ☐ |
 | Restrict administrative privileges | PIM just-in-time admin; separate runtime/deployment/audit identities; break-glass; admin role in CRM limited and audited | S1, S2, S3, S12 | ☐ |

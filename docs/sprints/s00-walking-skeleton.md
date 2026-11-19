@@ -24,7 +24,7 @@ A fresh clone opens in the devcontainer, `make verify` is green, `make dev` show
 
 Tick when done. Each story: write the listed tests first.
 
-### S0-1 Repository and devcontainer (E46)
+### ✅ S0-1 Repository and devcontainer (E46)
 
 *As a developer I can open the repo in a container with every tool installed.*
 
@@ -37,7 +37,7 @@ Implement: files from `docs/environment.md` §1–2, `global.json`, `.gitignore`
 
 Done when: container builds from scratch; `make doctor` green; post-create is idempotent (run twice).
 
-### S0-2 Solution layout, Directory.Build and central packages (E46)
+### ✅ S0-2 Solution layout, Directory.Build and central packages (E46)
 
 Tests first:
 - `Crm.Architecture.Tests` project exists with a failing test "solution has Crm.Host, Crm.Platform, Crm.Platform.Testing and Crm.Migrator projects".
@@ -47,7 +47,9 @@ Implement: `Crm.slnx`, `Directory.Build.props` (nullable, warnings as errors, an
 
 Done when: `dotnet build` clean with warnings-as-errors; package versions recorded with date in an ADR note.
 
-### S0-3 Makefile (E46)
+Evidence: [docs/evidence/s00/S0-2-build-baseline.md](../evidence/s00/S0-2-build-baseline.md); ADR-003 (test runner), ADR-010 (package baseline).
+
+### ✅ S0-3 Makefile (E46)
 
 Tests first: `scripts/checks/make-targets.sh` asserts every target listed in `CLAUDE.md` appears in `make help`, and that `make verify` exits non-zero when a test is made to fail (temporary).
 
@@ -55,7 +57,9 @@ Implement: Makefile per `docs/environment.md` §3.
 
 Done when: every target in the spec runs or is explicitly stubbed with a clear message and a TODO story ID.
 
-### S0-4 Host with health endpoint (E46)
+Evidence: [docs/evidence/s00/S0-3-makefile.md](../evidence/s00/S0-3-makefile.md).
+
+### ✅ S0-4 Host with health endpoint (E46)
 
 Tests first (xUnit, `WebApplicationFactory`):
 - `GetHealth_Anonymous_Returns200WithStatusOk` (health is the only anonymous API).
@@ -66,7 +70,9 @@ Implement: host with MVC controllers (`HealthController`), fallback authorisatio
 
 Done when: tests green; OpenAPI file emitted by `make api-client`.
 
-### S0-5 Vue 3 app and tooling (E46)
+Evidence: [docs/evidence/s00/S0-4-host-health.md](../evidence/s00/S0-4-host-health.md); ADR-011. Done against the original S0-4 text (minimal APIs, the same tests). The revised text above (MVC controllers, exception filter, §2a layout) is tracked as **S0-11**. Anonymous requests to unknown `/api` routes get 401 by design (ADR-011).
+
+### ✅ S0-5 Vue 3 app and tooling (E46)
 
 Tests first (Vitest + Testing Library + MSW):
 - `App shows the health status returned by the API`.
@@ -77,7 +83,9 @@ Implement: Vite + Vue 3 + TypeScript strict, Pinia, Vue Router, Tailwind CSS, ES
 
 Done when: `pnpm lint`, `format:check`, `typecheck`, `test --run`, `build` all pass; `make api-client-check` passes.
 
-### S0-6 OpenVue spike and UI foundation (E46, ADR-001)
+Evidence: [docs/evidence/s00/S0-5-vue-app.md](../evidence/s00/S0-5-vue-app.md); ADR-002 (pnpm and release-age policy); npm baseline in ADR-010.
+
+### ✅ S0-6 OpenVue spike and UI foundation (E46, ADR-001)
 
 Time-box: half a day for the spike, then implement.
 
@@ -89,7 +97,9 @@ Implement: confirm the OpenVue package name, version, licence and that unstyled 
 
 Done when: ADR-001 written with decision and evidence; wrappers tested.
 
-### S0-7 .NET build builds and serves the frontend (E46)
+Evidence: [docs/evidence/s00/S0-6-ui-foundation.md](../evidence/s00/S0-6-ui-foundation.md); decision in [ADR-001](../adr/001-ui-library.md).
+
+### ✅ S0-7 .NET build builds and serves the frontend (E46)
 
 Tests first (`Crm.Host.Tests`, category `Integration`):
 - `Get_Root_ReturnsSpaIndexHtml` after `dotnet build` (test fails if `wwwroot/index.html` is absent).
@@ -102,6 +112,8 @@ Implement: `BuildFrontend` and `IncludeFrontendInPublish` targets, Vite `outDir`
 
 Done when: `make build`, `make run`, `make publish` demonstrate the demo; pitfall in `docs/environment.md` §4 confirmed or corrected in the doc.
 
+Evidence: [docs/evidence/s00/S0-7-spa-hosting.md](../evidence/s00/S0-7-spa-hosting.md). `IncludeFrontendInPublish` not needed (SDK re-globs `wwwroot` at publish); static-asset manifest pitfall confirmed.
+
 ### S0-8 Dev loop and VS Code (E46)
 
 Tests first: `scripts/checks/vscode-config.sh` validates JSON, that every `launch.json` `preLaunchTask` exists in `tasks.json`, and that tasks call `make`.
@@ -109,6 +121,8 @@ Tests first: `scripts/checks/vscode-config.sh` validates JSON, that every `launc
 Implement: `.vscode` files, `make dev`, compound launch, Vite proxy, MSSQL extension profile, Test Explorer working for xUnit and Vitest.
 
 Done when: demo step 5 performed and noted in the sprint log.
+
+In progress: checks, `make dev`, proxy and debug configurations done; demo step 5 pending, see the checklist in [docs/evidence/s00/S0-8-dev-loop.md](../evidence/s00/S0-8-dev-loop.md).
 
 ### S0-9 Test harness (E46)
 
@@ -129,6 +143,19 @@ Tests first: a workflow lint (`actionlint` in `make lint` when present) and a de
 Implement: `.github/workflows/ci.yml` running `make verify` with a SQL Server service; `dotnet list package --vulnerable --include-transitive` and `pnpm audit` gates; Dependabot (or Renovate) for NuGet, npm, Actions and the devcontainer; secret scanning and push protection; CodeQL; pinned action SHAs; SBOM generation (CycloneDX); `.githooks`.
 
 Done when: CI green on a PR; branch protection requires CI and one review; SBOM artifact produced.
+
+### S0-11 Host on MVC controllers (E46): follow-up to the revised S0-4
+
+S0-4 was built against its original text (minimal APIs). The revised pack moves the API to MVC controllers with the §2a layering. Do this **before S0-9**, whose layering architecture tests need controllers to exist.
+
+Tests first:
+- The existing host tests stay green unchanged: they are HTTP-level (health, fallback 401, unknown-route 404/401, Production 500 without stack trace, OpenAPI document, SPA hosting).
+- `HealthController_IsOnlyEndpointUsingAnonymousPolicy` (architecture test: the `Anonymous` policy appears only on `HealthController` and the SPA fallback).
+- `ServiceException_IsConvertedToProblemDetails_ByExceptionFilter` (a throwaway controller in the test host throws `NotFoundException`, which returns 404 problem details).
+
+Implement: `AddControllers` with `[ApiController]`, `HealthController` at `api/v1/health` with `[Authorize(Policy = HostPolicies.Anonymous)]`, the platform exception filter and typed exceptions, `Controllers/` and `Dtos/` folders in `Crm.Host` per §2a. Replace the `IApiEndpoints` test seam with a test-only controller added by `AddApplicationPart`. The OpenAPI document must still describe `/api/v1/health` (regenerate it and review the diff).
+
+Done when: all S0-4 and S0-7 tests green without edits; ADR-011 updated for controllers; `make verify` green.
 
 ## Compliance evidence
 

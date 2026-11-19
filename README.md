@@ -61,7 +61,7 @@ reality has changed (renamed types, decisions made, stories already done, new ri
 
 ## Assumptions and flags
 
-- **OpenVue** is treated as the PrimeVue fork you named; I could not verify its package name or whether its unstyled mode works with Tailwind, so Sprint 0 has a time-boxed spike (ADR-001) with the in-house PrimeVue fork as fallback.
+- **OpenVue** was confirmed in the S0-6 spike: `openvue` 1.1.1, MIT, a fork of MIT PrimeVue 4, with unstyled mode working with Tailwind pass-through. See `docs/adr/001-ui-library.md` for risks and the in-house PrimeVue fork fallback.
 - **ASP.NET Core Identity** is used in external-login-only mode so it does not conflict with the "Entra ID only, no local accounts" compliance requirement. A test enforces it (S1).
 - **Claude and OpenAI APIs** are supported behind `IChatClient`. For Essential Eight and 800-171 purposes the production default is Azure OpenAI in an Australian region; direct provider APIs are development-only with synthetic data until you approve them (ADR-008).
 - **pnpm**, **xUnit v3**, SQL `LIKE` search for the MVP and the `Crm.Migrator` approach to migrations are defaults you can change through ADRs.
