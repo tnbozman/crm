@@ -33,4 +33,16 @@ public sealed class ModuleCompositionTests
         var partManager = (ApplicationPartManager)services.Single(d => d.ServiceType == typeof(ApplicationPartManager)).ImplementationInstance!;
         partManager.ApplicationParts.OfType<AssemblyPart>().Select(p => p.Assembly).ShouldContain(controllersAssembly);
     }
+
+    [Fact]
+    public void AddModules_Registry_IsResolvable()
+    {
+        var registry = new ModuleRegistry([new TestModule("Directory")]);
+        var services = new ServiceCollection();
+
+        services.AddModules(registry, EmptyConfiguration);
+
+        using var provider = services.BuildServiceProvider();
+        provider.GetRequiredService<ModuleRegistry>().ShouldBeSameAs(registry);
+    }
 }

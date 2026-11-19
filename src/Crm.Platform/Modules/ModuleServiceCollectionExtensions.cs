@@ -10,6 +10,7 @@ public static class ModuleServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(registry);
 
+        services.AddSingleton(registry);
         var mvc = services.AddControllers();
         foreach (var module in registry.Modules)
         {
