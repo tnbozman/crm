@@ -27,6 +27,11 @@ for t in $SPEC_TARGETS; do
     has_target "$t" || fail "docs/environment.md §3 specifies '$t' but make help does not list it"
 done
 
+# C. Every stub names the story that will implement it: $(call todo,S<sprint>-<n>,<message>).
+while IFS= read -r line; do
+    [[ "$line" =~ \$\(call\ todo,S[0-9]+-[0-9]+,[^,]+\)$ ]] || fail "stub without a story ID or message: $line"
+done < <(grep -n 'call todo' Makefile | grep -v '^[0-9]*:#')
+
 echo ""
 if [[ $ERRORS -eq 0 ]]; then
     echo "make-targets: all checks passed."
