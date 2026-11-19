@@ -1,6 +1,5 @@
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
-using NetArchTest.Rules;
 using Shouldly;
 using Xunit;
 
@@ -17,39 +16,16 @@ public sealed class LayeringTests
     }
 
     [Fact]
-    public void Controllers_DoNotReference_DbContextOrModels()
-    {
-        string[] forbidden = ["Microsoft.EntityFrameworkCore", .. NamespacesEndingWith(".Models")];
-
-        var result = Types.InAssemblies(CrmAssemblies.All)
-            .That().ResideInNamespaceEndingWith(".Controllers")
-            .ShouldNot().HaveDependencyOnAny(forbidden)
-            .GetResult();
-
-        Failing(result).ShouldBeEmpty("controllers use services and DTOs, never DbContext or Models");
-    }
+    public void Controllers_DoNotReference_DbContextOrModels() =>
+        LayeringRules.ControllersReferencingDbContextOrModels(CrmAssemblies.All).ShouldBeEmpty("controllers use services and DTOs, never DbContext or Models");
 
     [Fact]
-    public void Services_DoNotReference_HttpContextOrMvc()
-    {
-        var result = Types.InAssemblies(CrmAssemblies.All)
-            .That().ResideInNamespaceEndingWith(".Services")
-            .ShouldNot().HaveDependencyOnAny("Microsoft.AspNetCore.Http", "Microsoft.AspNetCore.Mvc")
-            .GetResult();
-
-        Failing(result).ShouldBeEmpty("services hold business rules and never touch HTTP or MVC types");
-    }
+    public void Services_DoNotReference_HttpContextOrMvcTypes() =>
+        LayeringRules.ServicesReferencingHttpContextOrMvc(CrmAssemblies.All).ShouldBeEmpty("services hold business rules and never touch HTTP or MVC types");
 
     [Fact]
-    public void Models_AreInternal()
-    {
-        var result = Types.InAssemblies(CrmAssemblies.All)
-            .That().ResideInNamespaceEndingWith(".Models")
-            .Should().NotBePublic()
-            .GetResult();
-
-        Failing(result).ShouldBeEmpty("EF models never leave their module");
-    }
+    public void Models_AreInternalAndNotUsedInDtosOrControllerSignatures() =>
+        LayeringRules.PublicModels(CrmAssemblies.All).ShouldBeEmpty("EF models never leave their module");
 
     [Fact]
     public void Controllers_ReturnOnlyDtoTypes()
@@ -89,14 +65,4 @@ public sealed class LayeringTests
             ? null
             : type;
     }
-
-    private static string[] NamespacesEndingWith(string suffix) =>
-        CrmAssemblies.All.SelectMany(a => a.GetTypes())
-            .Select(t => t.Namespace)
-            .Where(n => n is not null && n.EndsWith(suffix, StringComparison.Ordinal))
-            .Distinct(StringComparer.Ordinal)
-            .ToArray()!;
-
-    private static List<string> Failing(NetArchTest.Rules.TestResult result) =>
-        result.FailingTypeNames?.ToList() ?? [];
 }
