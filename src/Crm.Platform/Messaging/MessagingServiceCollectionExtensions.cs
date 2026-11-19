@@ -18,6 +18,7 @@ public static class MessagingServiceCollectionExtensions
         services.AddScoped<IRequestBehaviour, CorrelationBehaviour>();
         services.AddScoped<IRequestBehaviour, LoggingBehaviour>();
         services.AddScoped<IRequestBehaviour, ValidationBehaviour>();
+        services.AddScoped<IRequestBehaviour, AuthorisationBehaviour>();
         EventTypesIn(services);
         return services;
     }
