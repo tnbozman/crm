@@ -17,6 +17,7 @@ public static class MessagingServiceCollectionExtensions
         // The pipeline, outermost first (ADR-009).
         services.AddScoped<IRequestBehaviour, CorrelationBehaviour>();
         services.AddScoped<IRequestBehaviour, LoggingBehaviour>();
+        services.AddScoped<IRequestBehaviour, ValidationBehaviour>();
         EventTypesIn(services);
         return services;
     }
