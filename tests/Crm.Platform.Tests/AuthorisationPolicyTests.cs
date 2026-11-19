@@ -32,6 +32,25 @@ public sealed class AuthorisationPolicyTests
         (await authorisation.AuthorizeAsync(SignedIn(Roles.Sales, Roles.Finance), adminPolicy)).Succeeded.ShouldBeFalse();
     }
 
+    [Theory]
+    [InlineData(Roles.Admin)]
+    [InlineData(Roles.Sales)]
+    [InlineData(Roles.Delivery)]
+    [InlineData(Roles.Finance)]
+    [InlineData(Roles.Auditor)]
+    [InlineData(Roles.ReadOnly)]
+    public async Task RequireRole_Policy_AllowsThatRoleOnly(string role)
+    {
+        using var provider = BuildProvider();
+        var policy = await provider.GetRequiredService<IAuthorizationPolicyProvider>().GetPolicyAsync(Policies.ForRole(role));
+        var authorisation = provider.GetRequiredService<IAuthorizationService>();
+        var everyOtherRole = Roles.All.Where(r => r != role).ToArray();
+
+        policy.ShouldNotBeNull();
+        (await authorisation.AuthorizeAsync(SignedIn(role), policy)).Succeeded.ShouldBeTrue();
+        (await authorisation.AuthorizeAsync(SignedIn(everyOtherRole), policy)).Succeeded.ShouldBeFalse();
+    }
+
     private static ServiceProvider BuildProvider()
     {
         var services = new ServiceCollection().AddLogging();
