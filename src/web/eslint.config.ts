@@ -21,6 +21,24 @@ export default defineConfigWithVueTs(
     },
   },
 
+  {
+    name: 'crm/ui-through-wrappers',
+    ignores: ['src/ui/**', 'src/main.ts', 'src/test/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['openvue', 'openvue/*', '@openvue/*'],
+              message: 'Use the wrappers in src/ui (ADR-001); only src/ui imports OpenVue.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // Prettier owns formatting; ESLint does not report style.
   skipFormatting,
 )
