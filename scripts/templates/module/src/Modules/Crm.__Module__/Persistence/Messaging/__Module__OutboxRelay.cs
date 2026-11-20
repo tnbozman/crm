@@ -12,6 +12,9 @@ namespace Crm.__Module__.Persistence.Messaging;
 internal sealed partial class __Module__OutboxRelay(
     __Module__DbContext db, IServiceScopeFactory scopes, TimeProvider clock, ILogger<__Module__OutboxRelay> logger)
 {
+    /// <summary>The sp_getapplock resource: one relay per module at a time, across every host instance.</summary>
+    public const string LockResource = "crm:outbox-relay:__module__";
+
     public const int BatchSize = 50;
 
     public const int MaxAttempts = 10;
@@ -20,8 +23,59 @@ internal sealed partial class __Module__OutboxRelay(
 
     public static readonly TimeSpan MaxBackoff = TimeSpan.FromHours(1);
 
-    /// <summary>Publishes the due messages, oldest first, and returns how many were published.</summary>
+    /// <summary>
+    /// Publishes the due messages, oldest first, and returns how many were published. Returns 0 at once when another
+    /// relay for this module holds the lock.
+    /// </summary>
     public async Task<int> RunOnceAsync(CancellationToken cancellationToken)
+    {
+        // The lock belongs to this connection's session, so the connection stays open until it is released.
+        await db.Database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (!await TryLockAsync(cancellationToken).ConfigureAwait(false))
+            {
+                return 0;
+            }
+
+            try
+            {
+                return await PublishDueAsync(cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                await ExecuteLockProcedureAsync(
+                    "EXEC sp_releaseapplock @Resource = @resource, @LockOwner = 'Session';", CancellationToken.None).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            await db.Database.CloseConnectionAsync().ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>sp_getapplock without waiting: 0 or 1 means granted, a negative result means another relay holds it.</summary>
+    private async Task<bool> TryLockAsync(CancellationToken cancellationToken) =>
+        await ExecuteLockProcedureAsync(
+            """
+            DECLARE @result int;
+            EXEC @result = sp_getapplock @Resource = @resource, @LockMode = 'Exclusive', @LockOwner = 'Session', @LockTimeout = 0;
+            SELECT @result;
+            """,
+            cancellationToken).ConfigureAwait(false) >= 0;
+
+    private async Task<int> ExecuteLockProcedureAsync(string sql, CancellationToken cancellationToken)
+    {
+        await using var command = db.Database.GetDbConnection().CreateCommand();
+        command.CommandText = sql;
+        var resource = command.CreateParameter();
+        resource.ParameterName = "@resource";
+        resource.Value = LockResource;
+        command.Parameters.Add(resource);
+        return await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) is int result ? result : 0;
+    }
+
+    private async Task<int> PublishDueAsync(CancellationToken cancellationToken)
     {
         var now = clock.GetUtcNow();
         var due = await db.OutboxMessages

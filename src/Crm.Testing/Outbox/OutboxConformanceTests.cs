@@ -105,4 +105,32 @@ public abstract class OutboxConformanceTests : IAsyncLifetime
         (await Harness.RunRelayOnceAsync(failing, Cancellation)).ShouldBe(0);
         failing.Attempts.ShouldBe(message.Attempts, "a dead-lettered message is not retried");
     }
+
+    [Fact]
+    public async Task TwoRelays_ForSameModule_OnlyOneProcesses()
+    {
+        var first = await Harness.SaveChangeWithEventAsync(commit: true, Cancellation);
+        var second = await Harness.SaveChangeWithEventAsync(commit: true, Cancellation);
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var blocked = new RecordingEventPublisher
+        {
+            OnPublish = async (_, cancellationToken) =>
+            {
+                entered.TrySetResult();
+                await release.Task.WaitAsync(cancellationToken);
+            },
+        };
+
+        var running = Harness.RunRelayOnceAsync(blocked, Cancellation);
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(30), Cancellation);
+        var other = new RecordingEventPublisher();
+        var otherPublished = await Harness.RunRelayOnceAsync(other, Cancellation);
+        release.SetResult();
+
+        otherPublished.ShouldBe(0);
+        other.Attempts.ShouldBe(0, "a second relay for the same module waits for none and publishes nothing while the first holds the lock");
+        (await running).ShouldBe(2);
+        blocked.Published.Select(e => e.MessageId).ShouldBe([first, second]);
+    }
 }
