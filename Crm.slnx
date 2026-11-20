@@ -15,6 +15,7 @@
     <Project Path="tests/Crm.Architecture.Tests/Crm.Architecture.Tests.csproj" />
     <Project Path="tests/Crm.Host.Tests/Crm.Host.Tests.csproj" />
     <Project Path="tests/Crm.Mediator.Tests/Crm.Mediator.Tests.csproj" />
+    <Project Path="tests/Crm.Migrator.Tests/Crm.Migrator.Tests.csproj" />
     <Project Path="tests/Crm.SharedKernel.Tests/Crm.SharedKernel.Tests.csproj" />
     <Project Path="tests/Crm.Testing.Tests/Crm.Testing.Tests.csproj" />
   </Folder>

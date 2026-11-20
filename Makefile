@@ -9,6 +9,13 @@ OPENAPI := openapi/Crm.Host.json
 # (a filter matched nothing in a project); real failures still exit non-zero.
 TEST := dotnet test --solution $(SLN) -p:SkipFrontend=true --ignore-exit-code 8
 
+# The dev database (devcontainer db service). The connection string is built from the devcontainer's CRM_SQL_*
+# variables and passed in the environment, never on a command line. --reset is refused outside Development.
+DEV_DB ?= crm
+MIGRATOR = @DOTNET_ENVIRONMENT=Development \
+	ConnectionStrings__Crm="Server=$${CRM_SQL_SERVER:?set by the devcontainer};Database=$(DEV_DB);User ID=$${CRM_SQL_USER:-sa};Password=$${CRM_SQL_PASSWORD:?set by the devcontainer};TrustServerCertificate=true" \
+	dotnet run --project src/Crm.Migrator -p:SkipFrontend=true --
+
 # Stub for work owned by a later story: $(call todo,<story>,<message>). No commas in the message.
 # Prints to stderr and exits 0 so verify and post-create keep working until the story lands.
 todo = @echo "TODO($(1)): $(2)" >&2
@@ -102,10 +109,10 @@ db-up:           ## start the dev database service (run on the Docker host)
 	docker compose -f .devcontainer/docker-compose.yml up -d db
 
 db-reset:        ## drop, recreate and migrate the dev database
-	$(call todo,S1-4,make db-reset needs Crm.Migrator to know the module list)
+	$(MIGRATOR) --reset
 
 migrate:         ## apply pending migrations
-	$(call todo,S1-4,make migrate needs Crm.Migrator to know the module list)
+	$(MIGRATOR)
 
 migration-add:   ## make migration-add module=Directory name=AddOrganisation
 	@bash scripts/migration-add.sh "$(module)" "$(name)"

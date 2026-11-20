@@ -11,7 +11,18 @@ fail() { echo "FAIL: $*" >&2; ERRORS=$((ERRORS + 1)); }
 step() { echo "" && echo "== new-module: $*"; }
 
 WORK=$(mktemp -d)
-trap 'rm -rf "$WORK"' EXIT
+CHECK_DB="crm_module_check_$$"
+
+# The dev SQL Server from the devcontainer and CI (CRM_SQL_*); the password goes through the environment, not argv.
+sql() {
+    SQLCMDPASSWORD="${CRM_SQL_PASSWORD:-}" sqlcmd -C -S "${CRM_SQL_SERVER:-}" -U "${CRM_SQL_USER:-sa}" -b -h -1 -W -Q "SET NOCOUNT ON; $1"
+}
+cleanup() {
+    sql "IF DB_ID(N'$CHECK_DB') IS NOT NULL BEGIN ALTER DATABASE [$CHECK_DB] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [$CHECK_DB]; END" \
+        >/dev/null 2>&1 || true
+    rm -rf "$WORK"
+}
+trap cleanup EXIT
 
 # Tracked and untracked (not ignored) files, so uncommitted template changes are tested too.
 git ls-files -co --exclude-standard \
@@ -70,6 +81,13 @@ dotnet format Crm.slnx --verify-no-changes --include src/Modules/Crm.Zzz/ tests/
 
 step "the generated module's own tests pass (unit, and integration against SQL Server)"
 dotnet test --project tests/Modules/Zzz/Crm.Zzz.Tests -p:SkipFrontend=true || fail "the generated Crm.Zzz.Tests failed"
+
+step "make db-reset and make migrate apply the module's migrations through the Migrator"
+[[ -n "${CRM_SQL_SERVER:-}" && -n "${CRM_SQL_PASSWORD:-}" ]] || fail "CRM_SQL_SERVER and CRM_SQL_PASSWORD are not set (the devcontainer and CI set them)"
+"${MAKE[@]}" db-reset DEV_DB="$CHECK_DB" | tee /dev/stderr | grep -q "migrated Zzz" || fail "make db-reset did not migrate Zzz"
+[[ "$(sql "SELECT COUNT(*) FROM [$CHECK_DB].sys.tables t JOIN [$CHECK_DB].sys.schemas s ON s.schema_id = t.schema_id WHERE s.name = N'zzz' AND t.name = N'Items'")" == 1 ]] \
+    || fail "zzz.Items does not exist after make db-reset"
+"${MAKE[@]}" migrate DEV_DB="$CHECK_DB" || fail "make migrate on an up-to-date database failed"
 
 echo ""
 if [[ $ERRORS -eq 0 ]]; then
