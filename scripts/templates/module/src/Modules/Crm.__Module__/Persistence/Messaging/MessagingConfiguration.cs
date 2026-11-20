@@ -11,10 +11,11 @@ internal sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outb
         builder.ToTable("OutboxMessages");
         builder.HasKey(m => m.MessageId);
         builder.Property(m => m.MessageId).ValueGeneratedNever();
+        builder.Property(m => m.Sequence).UseIdentityColumn();
         builder.Property(m => m.Type).HasMaxLength(500).IsRequired();
         builder.Property(m => m.Payload).IsRequired();
         builder.Property(m => m.LastError).HasMaxLength(2000);
-        builder.HasIndex(m => new { m.NextAttemptAt, m.OccurredAt })
+        builder.HasIndex(m => new { m.NextAttemptAt, m.Sequence })
             .HasFilter("[ProcessedAt] IS NULL AND [DeadLetteredAt] IS NULL");
     }
 }

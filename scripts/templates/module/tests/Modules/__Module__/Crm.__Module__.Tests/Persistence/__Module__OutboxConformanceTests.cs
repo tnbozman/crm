@@ -8,5 +8,5 @@ namespace Crm.__Module__.Tests.Persistence;
 [Trait("Category", TestCategories.Integration)]
 public sealed class __Module__OutboxConformanceTests(__Module__Database database) : OutboxConformanceTests, IClassFixture<__Module__Database>
 {
-    protected override IOutboxHarness Harness { get; } = new __Module__OutboxHarness(database);
+    protected override IOutboxHarness CreateHarness(TimeProvider clock) => new __Module__OutboxHarness(database, clock);
 }

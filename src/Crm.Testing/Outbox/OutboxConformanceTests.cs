@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Time.Testing;
 using Shouldly;
 using Xunit;
 
@@ -7,9 +8,25 @@ namespace Crm.Testing.Outbox;
 /// The outbox, relay and inbox contract every module meets (ADR-009). Written once; each module's test project derives
 /// from it with its own <see cref="IOutboxHarness"/> and a fresh database, and runs it against real SQL Server.
 /// </summary>
-public abstract class OutboxConformanceTests
+public abstract class OutboxConformanceTests : IAsyncLifetime
 {
-    protected abstract IOutboxHarness Harness { get; }
+    private IOutboxHarness? harness;
+
+    /// <summary>The clock the outbox and relays read; tests move it to make retries due.</summary>
+    protected FakeTimeProvider Clock { get; } = new(new DateTimeOffset(2026, 12, 14, 9, 0, 0, TimeSpan.Zero));
+
+    private IOutboxHarness Harness => harness ??= CreateHarness(Clock);
+
+    /// <summary>The module's harness over a migrated test database, reading <paramref name="clock"/>.</summary>
+    protected abstract IOutboxHarness CreateHarness(TimeProvider clock);
+
+    public async ValueTask InitializeAsync() => await Harness.ResetAsync();
+
+    public ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
+    }
 
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
@@ -35,5 +52,21 @@ public abstract class OutboxConformanceTests
 
         (await Harness.CountChangedEntitiesAsync(Cancellation)).ShouldBe(before);
         (await Harness.FindOutboxMessageAsync(messageId, Cancellation)).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Relay_PublishesPendingMessages_ThroughMediator_AndMarksProcessed()
+    {
+        var first = await Harness.SaveChangeWithEventAsync(commit: true, Cancellation);
+        var second = await Harness.SaveChangeWithEventAsync(commit: true, Cancellation);
+        var publisher = new RecordingEventPublisher();
+
+        var published = await Harness.RunRelayOnceAsync(publisher, Cancellation);
+
+        published.ShouldBe(2);
+        publisher.Published.Select(e => e.MessageId).ShouldBe([first, second], "in the order they were written");
+        (await Harness.FindOutboxMessageAsync(first, Cancellation)).ShouldNotBeNull().ProcessedAt.ShouldBe(Clock.GetUtcNow());
+        (await Harness.FindOutboxMessageAsync(second, Cancellation)).ShouldNotBeNull().ProcessedAt.ShouldNotBeNull();
+        (await Harness.RunRelayOnceAsync(publisher, Cancellation)).ShouldBe(0, "processed messages are not published again");
     }
 }

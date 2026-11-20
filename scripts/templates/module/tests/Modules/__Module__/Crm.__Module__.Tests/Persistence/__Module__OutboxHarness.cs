@@ -1,19 +1,30 @@
 using Crm.__Module__.Models;
 using Crm.__Module__.Persistence;
 using Crm.__Module__.Persistence.Messaging;
+using Crm.Mediator;
 using Crm.Mediator.Contracts.__Module__;
 using Crm.SharedKernel.Security;
 using Crm.Testing.Outbox;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Crm.__Module__.Tests.Persistence;
 
 /// <summary>Adapts the __Module__ outbox, relay and inbox to the shared conformance suite.</summary>
-internal sealed class __Module__OutboxHarness(__Module__Database database) : IOutboxHarness
+internal sealed class __Module__OutboxHarness(__Module__Database database, TimeProvider clock) : IOutboxHarness
 {
     private const string ConformanceItemName = "Outbox conformance";
 
-    private readonly TimeProvider clock = TimeProvider.System;
+    public Task ResetAsync() => database.ResetAsync();
+
+    public async Task<int> RunRelayOnceAsync(IEventPublisher publisher, CancellationToken cancellationToken)
+    {
+        await using var services = new ServiceCollection().AddSingleton(publisher).BuildServiceProvider();
+        await using var db = database.CreateDbContext();
+        var relay = new __Module__OutboxRelay(db, services.GetRequiredService<IServiceScopeFactory>(), clock, NullLogger<__Module__OutboxRelay>.Instance);
+        return await relay.RunOnceAsync(cancellationToken);
+    }
 
     public async Task<Guid> SaveChangeWithEventAsync(bool commit, CancellationToken cancellationToken)
     {

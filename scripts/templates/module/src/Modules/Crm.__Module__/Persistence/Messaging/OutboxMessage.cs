@@ -27,6 +27,9 @@ internal sealed class OutboxMessage
 
     public Guid MessageId { get; private set; }
 
+    /// <summary>Write order, assigned by the database; the relay publishes in this order.</summary>
+    public long Sequence { get; private set; }
+
     public string Type { get; private set; }
 
     public DateTimeOffset OccurredAt { get; private set; }
@@ -48,6 +51,8 @@ internal sealed class OutboxMessage
     public DateTimeOffset? DeadLetteredAt { get; private set; }
 
     public string? LastError { get; private set; }
+
+    public void MarkProcessed(DateTimeOffset at) => ProcessedAt = at;
 
     public MessageEnvelope ToEnvelope() =>
         new(MessageId, Type, OccurredAt, Payload, CorrelationId, CausationId, OriginatingUserId);

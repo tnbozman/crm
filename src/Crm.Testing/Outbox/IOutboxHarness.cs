@@ -1,3 +1,5 @@
+using Crm.Mediator;
+
 namespace Crm.Testing.Outbox;
 
 /// <summary>
@@ -6,6 +8,9 @@ namespace Crm.Testing.Outbox;
 /// </summary>
 public interface IOutboxHarness
 {
+    /// <summary>Deletes every row in the module's tables, keeping the schema.</summary>
+    Task ResetAsync();
+
     /// <summary>
     /// In one transaction: saves a change to one of the module's entities and writes one integration event through the
     /// module's outbox; then commits or rolls back. Returns the event's message ID.
@@ -14,6 +19,12 @@ public interface IOutboxHarness
 
     /// <summary>How many of the entities <see cref="SaveChangeWithEventAsync"/> writes exist.</summary>
     Task<int> CountChangedEntitiesAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// One pass of a new relay instance (its own DbContext, as after a restart) publishing through
+    /// <paramref name="publisher"/>. Returns how many messages it published.
+    /// </summary>
+    Task<int> RunRelayOnceAsync(IEventPublisher publisher, CancellationToken cancellationToken);
 
     /// <summary>The outbox row for <paramref name="messageId"/>, or null.</summary>
     Task<OutboxMessageState?> FindOutboxMessageAsync(Guid messageId, CancellationToken cancellationToken);
