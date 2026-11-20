@@ -1,4 +1,5 @@
 using Crm.__Module__.Models;
+using Crm.__Module__.Persistence.Messaging;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crm.__Module__.Persistence;
@@ -9,6 +10,8 @@ internal sealed class __Module__DbContext(DbContextOptions<__Module__DbContext> 
     public const string Schema = "__module__";
 
     public DbSet<Item> Items => Set<Item>();
+
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

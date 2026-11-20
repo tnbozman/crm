@@ -69,6 +69,10 @@ dotnet_naming_style.begins_with_i.capitalization = pascal_case
 [tests/**/*.cs]
 dotnet_diagnostic.CA1707.severity = none
 
+# Shared conformance suites are test code that lives in Crm.Testing (ADR-009), so they follow the same test naming.
+[src/Crm.Testing/**/*ConformanceTests.cs]
+dotnet_diagnostic.CA1707.severity = none
+
 [*.{csproj,props,targets,xml,config,bicep,bicepparam}]
 indent_size = 2
 

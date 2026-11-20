@@ -9,11 +9,13 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="Respawn" />
+    <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit.v3.extensibility.core" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Crm.SharedKernel\Crm.SharedKernel.csproj" />
+    <ProjectReference Include="..\Crm.Mediator\Crm.Mediator.csproj" />
   </ItemGroup>
 
 </Project>
