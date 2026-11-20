@@ -107,7 +107,7 @@ Done when: the scaffolder is used to create Access in S1-6 (dog-food).
 
 Evidence: [docs/evidence/s01/S1-4-module-scaffolder.md](../evidence/s01/S1-4-module-scaffolder.md); ADR-014. Split into S1-4a (scaffolder and generated module) and S1-4b (Migrator, `make migrate`, `make db-reset`), because ticking S1-4 requires its `TODO(S1-4)` make stubs to be gone. Generated test project at `tests/Modules/<Module>/Crm.<Module>.Tests` (docs/architecture.md §1). The Migrator keeps its own module list, kept in step by architecture tests; it migrates the DbContexts each module registers in `AddServices`. `make check-module-new` (in `make verify`) scaffolds Zzz in a temporary copy and proves the build, architecture rules, formatting, the generated tests and the migrations. Each module has one example (`Item`) to replace. "Used to create Access" is confirmed in S1-6.
 
-### S1-5 Module outbox, inbox and relay (E46)
+### ✅ S1-5 Module outbox, inbox and relay (E46)
 
 Design: ADR-009. Each module owns this code, generated from the scaffolder templates (S1-4). Needs two scaffolded modules with migrations.
 
@@ -123,6 +123,8 @@ Tests first (persistence, real SQL; written once as a conformance suite in `Crm.
 Implement: in `scripts/templates/module/Persistence/`: outbox and inbox entities and configuration, `SaveChanges` hook, `IOutbox` (module-internal), inbox guard, hosted relay publishing through `IMediator`. The conformance suite in `Crm.Testing`. Regenerate the sample modules from the template.
 
 Done when: two sample modules exchange a query and an event through the mediator in an API-level test, with neither referencing the other (ADR-013).
+
+Evidence: [docs/evidence/s01/S1-5-module-outbox.md](../evidence/s01/S1-5-module-outbox.md); ADR-015. Split into S1-5a (outbox and relay), S1-5b (inbox) and S1-5c (drift check and module exchange). The conformance suite is in `Crm.Testing` without EF Core: each module's test project supplies a harness. The two sample modules (Zzz, Yyy) exist only in `make check-module-new`'s temporary copy, with the fixture in `scripts/checks/module-exchange`, because committed sample messages would sit in the production `Crm.Mediator`. Code lives in each module's `Persistence/Messaging`; tables are `OutboxMessages` and `InboxMessages`. Module API tests use a database with every module migrated. Open: retention of processed rows, and a system identity for subscribers that need to send queries.
 
 ### S1-6 Access module with ASP.NET Core Identity, external login only (E2)
 

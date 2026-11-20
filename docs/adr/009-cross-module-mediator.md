@@ -1,6 +1,6 @@
 # ADR-009: Cross-module communication through an in-house mediator
 
-- Status: Accepted (2026-11-19, Sprint 1 kickoff, before S1-1). Names refined when built in S1-3. **Project layout superseded by ADR-013**: there are no per-module Contracts projects and no `Crm.Platform`; the mediator and every message live in `Crm.Mediator` (messages under `Crm.Mediator.Contracts.<Module>`), common features in `Crm.SharedKernel`, and startup validation runs in `AddMediator(registry)` over the contracts namespace. The communication rules below stand.
+- Status: Accepted (2026-11-19, Sprint 1 kickoff, before S1-1). Rule 4 built in S1-5 as described in ADR-015 (the conformance suite is in `Crm.Testing` and needs no EF Core). Names refined when built in S1-3. **Project layout superseded by ADR-013**: there are no per-module Contracts projects and no `Crm.Platform`; the mediator and every message live in `Crm.Mediator` (messages under `Crm.Mediator.Contracts.<Module>`), common features in `Crm.SharedKernel`, and startup validation runs in `AddMediator(registry)` over the contracts namespace. The communication rules below stand.
 
 ## Context
 

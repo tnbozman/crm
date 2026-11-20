@@ -104,6 +104,7 @@ The Migrator finds a module's DbContexts among the services `AddServices` regist
 - Every table carries `OwnerTeamId`, `BusinessUnitId` where records are access-controlled, plus `CreatedAt/By`, `UpdatedAt/By`, and a `rowversion` concurrency token.
 - Custom fields: definitions in `config`; values in an `nvarchar(max)` JSON column on the owning row, validated through a `Crm.Mediator.Contracts.Config` query.
 - Global query filters apply the current user's visibility scope in each DbContext. Negative tests prove another business unit cannot see the row.
+- Outbox, inbox and relay: each module's `Persistence/Messaging`, generated from the template and checked by `module-outbox-drift.sh` (ADR-015).
 - Migrations: `make migration-add module=<Module> name=<Name>` writes them to the module's `Persistence/Migrations` (internal classes). `Crm.Migrator` applies each module's migrations through the DbContexts the module registers in `AddServices` (ADR-014). The connection string is `ConnectionStrings:Crm` (`ModuleDatabase.ConnectionStringName`).
 - Dev: `make migrate`, `make db-reset` (refused outside Development). Azure: `Crm.Migrator` run by the deployment identity. The runtime identity has no DDL rights; a startup test asserts the host never calls `Migrate()`.
 
@@ -182,3 +183,4 @@ The SQL fixture (`Crm.Testing.SqlFixture`) reads `CRM_SQL_SERVER`, `CRM_SQL_USER
 | ADR-012 | Module type visibility | Only the `IModule` class is public in a module implementation; internal controllers discovered in module assemblies (**accepted**, S1-1) |
 | ADR-013 | Project structure | Host, SharedKernel, Mediator (with every cross-module message), one library per module referencing only SharedKernel and Mediator (**accepted**, S1-3) |
 | ADR-014 | Module scaffolding and migrations | `make module-new` templates; the Migrator migrates the DbContexts each module registers; internal migrations, history per schema; reset in Development only (**accepted**, S1-4) |
+| ADR-015 | Module outbox, inbox and relay | `Persistence/Messaging` per module from the template; `sp_getapplock` relay with backoff and dead-letter; inbox per subscriber; EF-free conformance suite in `Crm.Testing`; drift check in `make lint` (**accepted**, S1-5) |
