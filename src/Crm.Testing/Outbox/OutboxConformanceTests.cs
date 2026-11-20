@@ -1,3 +1,5 @@
+using Crm.Mediator;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Time.Testing;
 using Shouldly;
 using Xunit;
@@ -160,5 +162,49 @@ public abstract class OutboxConformanceTests : IAsyncLifetime
         {
             (await Harness.FindOutboxMessageAsync(messageId, Cancellation)).ShouldNotBeNull().ProcessedAt.ShouldNotBeNull();
         }
+    }
+
+    [Fact]
+    public async Task Handler_ReceivingSameMessageTwice_RunsOnce()
+    {
+        var envelope = Envelope();
+
+        await Harness.DeliverToInboxSubscriberAsync(envelope, fail: false, Cancellation);
+        await Harness.DeliverToInboxSubscriberAsync(envelope, fail: false, Cancellation);
+
+        (await Harness.CountInboxSubscriberChangesAsync(envelope.MessageId, Cancellation)).ShouldBe(1);
+        (await SchemasHoldingTableAsync("InboxMessages")).ShouldBe([Harness.Schema], "the inbox is in the subscriber's own schema");
+    }
+
+    [Fact]
+    public async Task Handler_FailingBeforeItsChangeIsSaved_RunsAgainOnRedelivery()
+    {
+        var envelope = Envelope();
+
+        await Should.ThrowAsync<InvalidOperationException>(() => Harness.DeliverToInboxSubscriberAsync(envelope, fail: true, Cancellation));
+        await Harness.DeliverToInboxSubscriberAsync(envelope, fail: false, Cancellation);
+
+        (await Harness.CountInboxSubscriberChangesAsync(envelope.MessageId, Cancellation))
+            .ShouldBe(1, "the inbox record is saved with the change, so a failed delivery is not marked received");
+    }
+
+    private MessageEnvelope Envelope() =>
+        new(Guid.NewGuid(), "Crm.Testing.Outbox.ConformanceEvent", Clock.GetUtcNow(), "{}", Guid.NewGuid(), null, null);
+
+    private async Task<List<string>> SchemasHoldingTableAsync(string table)
+    {
+        await using var connection = new SqlConnection(Harness.ConnectionString);
+        await connection.OpenAsync(Cancellation);
+        await using var command = new SqlCommand(
+            "SELECT s.name FROM sys.tables t JOIN sys.schemas s ON s.schema_id = t.schema_id WHERE t.name = @table", connection);
+        command.Parameters.AddWithValue("@table", table);
+        await using var reader = await command.ExecuteReaderAsync(Cancellation);
+        var schemas = new List<string>();
+        while (await reader.ReadAsync(Cancellation))
+        {
+            schemas.Add(reader.GetString(0));
+        }
+
+        return schemas;
     }
 }

@@ -23,6 +23,7 @@ public sealed class __Module__Module : IModule
         services.TryAddSingleton(TimeProvider.System);
         services.Add__Module__DbContext(configuration);
         services.AddScoped<IOutbox, Outbox>();
+        services.AddScoped<IInbox, Inbox>();
         services.AddScoped<__Module__OutboxRelay>();
         services.AddHostedService<__Module__OutboxRelayService>();
         services.AddScoped<IItemService, ItemService>();

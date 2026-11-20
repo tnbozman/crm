@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Crm.__Module__.Persistence.Messaging;
 
-/// <summary>The outbox table, in the module's own schema. Generated; keep in step with the template.</summary>
+/// <summary>The outbox and inbox tables, in the module's own schema. Generated; keep in step with the template.</summary>
 internal sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage>
 {
     public void Configure(EntityTypeBuilder<OutboxMessage> builder)
@@ -17,5 +17,15 @@ internal sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outb
         builder.Property(m => m.LastError).HasMaxLength(2000);
         builder.HasIndex(m => new { m.NextAttemptAt, m.Sequence })
             .HasFilter("[ProcessedAt] IS NULL AND [DeadLetteredAt] IS NULL");
+    }
+}
+
+internal sealed class InboxMessageConfiguration : IEntityTypeConfiguration<InboxMessage>
+{
+    public void Configure(EntityTypeBuilder<InboxMessage> builder)
+    {
+        builder.ToTable("InboxMessages");
+        builder.HasKey(m => new { m.MessageId, m.Subscriber });
+        builder.Property(m => m.Subscriber).HasMaxLength(200);
     }
 }

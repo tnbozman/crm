@@ -16,7 +16,38 @@ internal sealed class __Module__OutboxHarness(__Module__Database database, TimeP
 {
     private const string ConformanceItemName = "Outbox conformance";
 
+    public string ConnectionString => database.ConnectionString;
+
+    public string Schema => __Module__DbContext.Schema;
+
     public Task ResetAsync() => database.ResetAsync();
+
+    public async Task DeliverToInboxSubscriberAsync(MessageEnvelope envelope, bool fail, CancellationToken cancellationToken)
+    {
+        await using var db = database.CreateDbContext();
+        var inbox = new Inbox(db, clock);
+        if (!await inbox.TryReceiveAsync(envelope, "OutboxConformance", cancellationToken))
+        {
+            return;
+        }
+
+        db.Items.Add(new Item(Guid.CreateVersion7(), InboxItemName(envelope.MessageId), clock.GetUtcNow()));
+        if (fail)
+        {
+            throw new InvalidOperationException("The conformance subscriber failed before saving.");
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<int> CountInboxSubscriberChangesAsync(Guid messageId, CancellationToken cancellationToken)
+    {
+        var name = InboxItemName(messageId);
+        await using var db = database.CreateDbContext();
+        return await db.Items.CountAsync(i => i.Name == name, cancellationToken);
+    }
+
+    private static string InboxItemName(Guid messageId) => $"Inbox {messageId}";
 
     public async Task<int> RunRelayOnceAsync(IEventPublisher publisher, CancellationToken cancellationToken)
     {

@@ -8,6 +8,12 @@ namespace Crm.Testing.Outbox;
 /// </summary>
 public interface IOutboxHarness
 {
+    /// <summary>The test database, for checks the suite makes in SQL.</summary>
+    string ConnectionString { get; }
+
+    /// <summary>The module's SQL schema.</summary>
+    string Schema { get; }
+
     /// <summary>Deletes every row in the module's tables, keeping the schema.</summary>
     Task ResetAsync();
 
@@ -25,6 +31,15 @@ public interface IOutboxHarness
     /// <paramref name="publisher"/>. Returns how many messages it published.
     /// </summary>
     Task<int> RunRelayOnceAsync(IEventPublisher publisher, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Delivers <paramref name="envelope"/> to a subscriber in this module that guards with the module's inbox and then
+    /// saves one entity change. With <paramref name="fail"/> the subscriber throws after its change, before saving.
+    /// </summary>
+    Task DeliverToInboxSubscriberAsync(MessageEnvelope envelope, bool fail, CancellationToken cancellationToken);
+
+    /// <summary>How many changes the inbox subscriber saved for <paramref name="messageId"/>.</summary>
+    Task<int> CountInboxSubscriberChangesAsync(Guid messageId, CancellationToken cancellationToken);
 
     /// <summary>The outbox row for <paramref name="messageId"/>, or null.</summary>
     Task<OutboxMessageState?> FindOutboxMessageAsync(Guid messageId, CancellationToken cancellationToken);
