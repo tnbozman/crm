@@ -111,7 +111,7 @@ migration-add:   ## make migration-add module=Directory name=AddOrganisation
 	$(call todo,S1-4,make migration-add needs the first module DbContext)
 
 module-new:      ## scaffold a module: make module-new name=Directory
-	$(call todo,S1-4,make module-new runs scripts/new-module.sh)
+	@bash scripts/new-module.sh "$(name)"
 
 publish:         ## publish the host (includes wwwroot)
 	dotnet publish $(HOST) -c Release -o artifacts/publish
