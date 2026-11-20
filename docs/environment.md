@@ -151,7 +151,7 @@ HOST := src/Crm.Host
         test test-unit test-int test-arch test-web test-e2e \
         lint format format-check api-client api-client-check \
         db-up db-reset migrate migration-add module-new \
-        publish verify ai-smoke coverage clean
+        publish check-module-new verify ai-smoke coverage clean
 
 help:            ## list targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-18s %s\n", $$1, $$2}'
@@ -217,21 +217,20 @@ api-client-check: api-client   ## fail if generated client differs from committe
 db-up:           ## start the dev database service
 	docker compose -f .devcontainer/docker-compose.yml up -d db
 
-db-reset:        ## drop, recreate and migrate the dev database
-	dotnet run --project src/Crm.Migrator -- --reset --environment Development
+db-reset:        ## drop, recreate and migrate the dev database (DEV_DB, default crm)
+	$(MIGRATOR) --reset      # DOTNET_ENVIRONMENT=Development, ConnectionStrings__Crm from CRM_SQL_*
 
 migrate:         ## apply pending migrations
-	dotnet run --project src/Crm.Migrator -- --environment Development
+	$(MIGRATOR)
 
 migration-add:   ## make migration-add module=Directory name=AddOrganisation
-	@test -n "$(module)" -a -n "$(name)" || (echo "usage: make migration-add module=X name=Y" && exit 1)
-	dotnet ef migrations add $(name) --context $(module)DbContext \
-	  --project src/Modules/$(module)/Crm.$(module) --startup-project src/Crm.Migrator \
-	  --output-dir Persistence/Migrations
+	@bash scripts/migration-add.sh "$(module)" "$(name)"   # dotnet-ef, module project as startup
 
-module-new:     ## scaffold a module: make module-new name=Directory
-	@test -n "$(name)" || (echo "usage: make module-new name=X" && exit 1)
-	./scripts/new-module.sh $(name)
+module-new:      ## scaffold a module: make module-new name=Directory
+	@bash scripts/new-module.sh "$(name)"
+
+check-module-new: ## scaffold a module in a temporary copy and prove it (part of verify)
+	@bash scripts/checks/new-module.sh
 
 publish:         ## publish the host (includes wwwroot)
 	dotnet publish $(HOST) -c Release -o artifacts/publish

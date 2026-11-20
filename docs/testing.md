@@ -36,7 +36,7 @@ public sealed class OrganisationServiceTests(SqlFixture sql) : IClassFixture<Sql
 
 - It creates `crm_test_<guid>` on initialise and drops it on dispose. Use **one fixture per test class** (`IClassFixture<SqlFixture>`). Classes then run in parallel without colliding. Respawn would wipe a database shared between parallel classes, so the fixture is per class rather than per assembly.
 - `ResetAsync()` deletes all rows (Respawn), ignores `__EFMigrationsHistory`, and picks up tables created after the fixture started.
-- Migrations are not applied yet: the first module DbContext and `Crm.Migrator` arrive in S1-4, which will add a migrations step to the fixture.
+- Module tests wrap it: the scaffolded `tests/Modules/<Module>/Crm.<Module>.Tests/<Module>Database.cs` creates the database and applies that module's migrations (`MigrateAsync`) once per test class. Each module also has `Model_HasNoPendingChanges_AgainstTheMigrations` (unit) and `Migrations_ApplyToEmptyDatabase_InTheModuleSchemaOnly` (integration). `Crm.Migrator.Tests` covers applying every module's migrations and the Development-only reset.
 - The connection comes from the environment, never from code:
 
 | Variable | Devcontainer | CI (S0-10) |
@@ -66,7 +66,7 @@ SELECT session_id, program_name FROM sys.dm_exec_sessions WHERE database_id = DB
 
 ## Architecture tests
 
-`tests/Crm.Architecture.Tests` scans every production `Crm.*` assembly it references (add new module projects to its `.csproj`): solution layout, build gates, central package management, layering (controllers, services, models, DTOs), EF Core only in modules and the Migrator, and no `Migrate` calls in the host.
+`tests/Crm.Architecture.Tests` scans every production `Crm.*` assembly it references (module libraries arrive through its `Crm.Host` reference): solution layout, build gates, central package management, layering (controllers, services, models, DTOs), EF Core only in modules and the Migrator, and no `Migrate` calls in the host.
 
 Module rules (S1-1, ADR-013) run on two sets: the shipped modules (`Crm.Host` `HostModules.All`, messages in `Crm.Mediator.Contracts`, projects in `src/Modules`), which must be clean, and two test-only fixture modules in `tests/Fixtures/Modules` (messages in the stand-in `tests/Fixtures/Fixture.Contracts`). **Sample** obeys every rule; **Rogue** breaks each rule once. Each rule has a `_FlagsRogueOnly` test asserting it reports exactly Rogue's violation, so every rule is proven to fail as well as pass. When you add a module rule, add its violation to Rogue (see `tests/Fixtures/README.md`). The rules live in `ModuleRules` (module project references, message content, visibility, DbContext and schema, handler ownership) and `LayeringRules` (controllers, services, models, DTOs, try/catch, folders). `DbContextModels.Load` builds a module's EF model without a database. `tests/Crm.Host.Tests/EndpointPolicyTests` checks the anonymous allow-list (ADR-011) against the live endpoint table.
 

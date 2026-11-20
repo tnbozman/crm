@@ -25,6 +25,7 @@
 | 2026-11-19 | Bogus | 35.6.5 | latest stable on nuget.org | S0-9 |
 | 2026-11-19 | NetArchTest.Rules | 1.3.2 | latest stable on nuget.org | S0-9 |
 | 2026-11-19 | Microsoft.EntityFrameworkCore.SqlServer | 10.0.15 | latest 10.x; 11.0.0 targets .NET 11. First used by the architecture test fixtures | S1-1 |
+| 2026-11-20 | Microsoft.EntityFrameworkCore.Design | 10.0.15 | latest 10.x, matching the runtime; private asset of each module project for make migration-add | S1-4 |
 | 2026-11-19 | Microsoft.Extensions.TimeProvider.Testing | 10.11.0 | latest 10.x; 11.0.0 belongs to the .NET 11 wave | S1-3 |
 
 Also pinned outside `Directory.Packages.props`:

@@ -84,7 +84,9 @@ dotnet test --project tests/Modules/Zzz/Crm.Zzz.Tests -p:SkipFrontend=true || fa
 
 step "make db-reset and make migrate apply the module's migrations through the Migrator"
 [[ -n "${CRM_SQL_SERVER:-}" && -n "${CRM_SQL_PASSWORD:-}" ]] || fail "CRM_SQL_SERVER and CRM_SQL_PASSWORD are not set (the devcontainer and CI set them)"
-"${MAKE[@]}" db-reset DEV_DB="$CHECK_DB" | tee /dev/stderr | grep -q "migrated Zzz" || fail "make db-reset did not migrate Zzz"
+reset_output=$("${MAKE[@]}" db-reset DEV_DB="$CHECK_DB" 2>&1) || fail "make db-reset failed"
+echo "$reset_output"
+grep -q "migrated Zzz" <<<"$reset_output" || fail "make db-reset did not migrate Zzz"
 [[ "$(sql "SELECT COUNT(*) FROM [$CHECK_DB].sys.tables t JOIN [$CHECK_DB].sys.schemas s ON s.schema_id = t.schema_id WHERE s.name = N'zzz' AND t.name = N'Items'")" == 1 ]] \
     || fail "zzz.Items does not exist after make db-reset"
 "${MAKE[@]}" migrate DEV_DB="$CHECK_DB" || fail "make migrate on an up-to-date database failed"

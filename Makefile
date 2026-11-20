@@ -24,7 +24,7 @@ todo = @echo "TODO($(1)): $(2)" >&2
         test test-unit test-int test-arch test-web test-e2e \
         lint format format-check api-client api-client-check \
         db-up db-reset migrate migration-add module-new \
-        publish check-dev check-spa audit sbom check-sbom verify ai-smoke coverage clean
+        publish check-dev check-spa check-module-new audit sbom check-sbom verify ai-smoke coverage clean
 
 help:            ## list targets
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-18s %s\n", $$1, $$2}'
@@ -130,6 +130,9 @@ check-spa:       ## frontend build checks: incremental build, clean publish cont
 	@bash scripts/checks/frontend-incremental.sh
 	@bash scripts/checks/publish-contains-spa.sh
 
+check-module-new: ## scaffold a module in a temporary copy: it builds, passes the architecture, format and its own tests, and migrates
+	@bash scripts/checks/new-module.sh
+
 audit:           ## fail on High/Critical vulnerabilities (NuGet incl. transitive, npm)
 	@bash scripts/checks/dependency-audit.sh
 
@@ -141,7 +144,7 @@ sbom:            ## CycloneDX SBOMs of what ships: artifacts/sbom/{backend,front
 check-sbom:      ## produce the SBOMs and check they are valid CycloneDX listing known components
 	@bash scripts/checks/sbom.sh
 
-verify: lint build test api-client-check audit check-spa   ## what CI runs
+verify: lint build test api-client-check audit check-spa check-module-new   ## what CI runs
 
 ai-smoke:        ## calls each configured AI provider once (skipped without keys)
 	$(call todo,S2-7,make ai-smoke calls each configured AI provider)

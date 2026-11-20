@@ -97,13 +97,15 @@ Evidence: [docs/evidence/s01/S1-3-mediator.md](../evidence/s01/S1-3-mediator.md)
 
 **Added scope (2026-11-19, at the developer's direction): project structure (ADR-013).** `Crm.Platform` split into `Crm.SharedKernel` (common features, no endpoints or data stores) and `Crm.Mediator` (the mediator plus every cross-module message under `Crm.Mediator.Contracts.<Module>`); `Crm.Platform.Testing` renamed `Crm.Testing`. A module is one library that references only `Crm.SharedKernel` and `Crm.Mediator`; the host references every module. No per-module Contracts projects; `IModule.ContractsAssembly` removed; startup handler validation moved to `AddMediator(registry)`. Named `SharedKernel` because CA1716 rejects `Shared` (a VB keyword) in namespaces. Evidence: [docs/evidence/s01/S1-3-project-structure.md](../evidence/s01/S1-3-project-structure.md).
 
-### S1-4 Module scaffolder (E46)
+### ✅ S1-4 Module scaffolder (E46)
 
 Tests first: `scripts/checks/new-module.sh` runs `make module-new name=Zzz` in a temp copy, then `dotnet build` and `make test-arch` succeed; the generated module is one library `src/Modules/Crm.Zzz` (referencing only `Crm.SharedKernel` and `Crm.Mediator`) with a test project, DbContext, initial migration, endpoints stub, `Skills/` folder, a messages folder `src/Crm.Mediator/Contracts/Zzz/` and a web feature folder (ADR-013).
 
 Implement: `scripts/new-module.sh` with templates (Controllers, Services, Dtos, Models, Persistence, Mapping, Validation, Handlers folders each with one example class and tests; handler registration from S1-3; S1-5 adds the outbox, inbox and relay to Persistence) under `scripts/templates/module/`; adds the module to the solution, the host's project references and module list, and the Migrator.
 
 Done when: the scaffolder is used to create Access in S1-6 (dog-food).
+
+Evidence: [docs/evidence/s01/S1-4-module-scaffolder.md](../evidence/s01/S1-4-module-scaffolder.md); ADR-014. Split into S1-4a (scaffolder and generated module) and S1-4b (Migrator, `make migrate`, `make db-reset`), because ticking S1-4 requires its `TODO(S1-4)` make stubs to be gone. Generated test project at `tests/Modules/<Module>/Crm.<Module>.Tests` (docs/architecture.md §1). The Migrator keeps its own module list, kept in step by architecture tests; it migrates the DbContexts each module registers in `AddServices`. `make check-module-new` (in `make verify`) scaffolds Zzz in a temporary copy and proves the build, architecture rules, formatting, the generated tests and the migrations. Each module has one example (`Item`) to replace. "Used to create Access" is confirmed in S1-6.
 
 ### S1-5 Module outbox, inbox and relay (E46)
 
