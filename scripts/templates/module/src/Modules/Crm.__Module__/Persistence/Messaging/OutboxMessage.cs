@@ -54,6 +54,25 @@ internal sealed class OutboxMessage
 
     public void MarkProcessed(DateTimeOffset at) => ProcessedAt = at;
 
+    /// <summary>
+    /// Records a failed delivery: retried after an exponential backoff, dead-lettered after <paramref name="maxAttempts"/>.
+    /// Only the exception type is stored: messages can hold data that does not belong in the outbox.
+    /// </summary>
+    public void RecordFailure(Exception error, DateTimeOffset at, int maxAttempts, TimeSpan firstBackoff, TimeSpan maxBackoff)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        Attempts++;
+        LastError = error.GetType().FullName;
+        if (Attempts >= maxAttempts)
+        {
+            DeadLetteredAt = at;
+            return;
+        }
+
+        var backoff = firstBackoff * Math.Pow(2, Attempts - 1);
+        NextAttemptAt = at + (backoff < maxBackoff ? backoff : maxBackoff);
+    }
+
     public MessageEnvelope ToEnvelope() =>
         new(MessageId, Type, OccurredAt, Payload, CorrelationId, CausationId, OriginatingUserId);
 }

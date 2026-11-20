@@ -69,4 +69,40 @@ public abstract class OutboxConformanceTests : IAsyncLifetime
         (await Harness.FindOutboxMessageAsync(second, Cancellation)).ShouldNotBeNull().ProcessedAt.ShouldNotBeNull();
         (await Harness.RunRelayOnceAsync(publisher, Cancellation)).ShouldBe(0, "processed messages are not published again");
     }
+
+    [Fact]
+    public async Task Relay_Retries_FailedHandler_WithBackoff_ThenDeadLetters()
+    {
+        var messageId = await Harness.SaveChangeWithEventAsync(commit: true, Cancellation);
+        var failing = new RecordingEventPublisher { OnPublish = (_, _) => throw new InvalidOperationException("subscriber failed") };
+        var delays = new List<TimeSpan>();
+
+        OutboxMessageState message;
+        do
+        {
+            (await Harness.RunRelayOnceAsync(failing, Cancellation)).ShouldBe(0);
+            message = (await Harness.FindOutboxMessageAsync(messageId, Cancellation)).ShouldNotBeNull();
+            message.ProcessedAt.ShouldBeNull();
+            if (message.DeadLetteredAt is null)
+            {
+                var attemptsSoFar = failing.Attempts;
+                (await Harness.RunRelayOnceAsync(failing, Cancellation)).ShouldBe(0);
+                failing.Attempts.ShouldBe(attemptsSoFar, "a failed message is not retried before its backoff ends");
+
+                delays.Add(message.NextAttemptAt - Clock.GetUtcNow());
+                Clock.SetUtcNow(message.NextAttemptAt);
+            }
+        }
+        while (message.DeadLetteredAt is null && failing.Attempts < 100);
+
+        message.DeadLetteredAt.ShouldNotBeNull("a message that keeps failing is dead-lettered");
+        message.Attempts.ShouldBe(failing.Attempts);
+        delays.Count.ShouldBeGreaterThan(1, "it is retried before it is dead-lettered");
+        delays.ShouldBe(delays.Order().ToList(), "backoff never shrinks");
+        delays[^1].ShouldBeGreaterThan(delays[0], "backoff grows");
+
+        Clock.Advance(TimeSpan.FromDays(30));
+        (await Harness.RunRelayOnceAsync(failing, Cancellation)).ShouldBe(0);
+        failing.Attempts.ShouldBe(message.Attempts, "a dead-lettered message is not retried");
+    }
 }
