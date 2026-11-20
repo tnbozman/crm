@@ -108,7 +108,7 @@ migrate:         ## apply pending migrations
 	$(call todo,S1-4,make migrate needs Crm.Migrator to know the module list)
 
 migration-add:   ## make migration-add module=Directory name=AddOrganisation
-	$(call todo,S1-4,make migration-add needs the first module DbContext)
+	@bash scripts/migration-add.sh "$(module)" "$(name)"
 
 module-new:      ## scaffold a module: make module-new name=Directory
 	@bash scripts/new-module.sh "$(name)"

@@ -9,11 +9,12 @@ namespace Crm.Architecture.Tests;
 [Trait("Category", "Architecture")]
 public sealed class LayeringTests
 {
+    /// <summary>The skeleton projects and every shipped module library (ADR-013), so the rules below see each module.</summary>
     [Fact]
-    public void ProductionAssemblies_AreDiscovered()
-    {
-        CrmAssemblies.All.Select(a => a.GetName().Name).ShouldBe(["Crm.Host", "Crm.Mediator", "Crm.Migrator", "Crm.SharedKernel"], ignoreOrder: true);
-    }
+    public void ProductionAssemblies_AreDiscovered() =>
+        CrmAssemblies.All.Select(a => a.GetName().Name).ShouldBe(
+            ["Crm.Host", "Crm.Mediator", "Crm.Migrator", "Crm.SharedKernel", .. ShippedModules.All.Select(m => m.Implementation.GetName().Name)],
+            ignoreOrder: true);
 
     [Fact]
     public void Controllers_DoNotReference_DbContextOrModels() =>

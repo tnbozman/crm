@@ -8,5 +8,8 @@ namespace Crm.Host;
 /// </summary>
 internal static class HostModules
 {
-    public static IReadOnlyList<IModule> All { get; } = [];
+    public static IReadOnlyList<IModule> All { get; } =
+    [
+        // make module-new adds modules above this line
+    ];
 }
