@@ -69,6 +69,22 @@ if "${MAKE[@]}" module-new name=Zzz >/dev/null 2>&1; then
     fail "make module-new name=Zzz succeeded twice"
 fi
 
+step "the outbox drift check passes on the generated module and fails on a planted change"
+bash scripts/checks/module-outbox-drift.sh || fail "module-outbox-drift.sh fails on a freshly generated module"
+RELAY=src/Modules/Crm.Zzz/Persistence/Messaging/ZzzOutboxRelay.cs
+cp "$RELAY" "$WORK/relay.orig"
+sed -i 's/public const int MaxAttempts = 10;/public const int MaxAttempts = 11;/' "$RELAY"
+if bash scripts/checks/module-outbox-drift.sh >/dev/null 2>&1; then
+    fail "module-outbox-drift.sh passed with a planted change to $RELAY"
+fi
+cp "$WORK/relay.orig" "$RELAY"
+echo "// extra" >src/Modules/Crm.Zzz/Persistence/Messaging/Extra.cs
+if bash scripts/checks/module-outbox-drift.sh >/dev/null 2>&1; then
+    fail "module-outbox-drift.sh passed with a file added to the module's Messaging folder"
+fi
+rm src/Modules/Crm.Zzz/Persistence/Messaging/Extra.cs
+rm "$WORK/relay.orig"
+
 step "the solution builds and the architecture tests pass"
 dotnet build Crm.slnx -c Debug -p:SkipFrontend=true -nologo -v quiet || fail "dotnet build failed"
 "${MAKE[@]}" test-arch || fail "make test-arch failed"
