@@ -10,7 +10,7 @@ using Xunit;
 namespace Crm.__Module__.Tests.Controllers;
 
 [Trait("Category", TestCategories.Integration)]
-public sealed class ItemsControllerTests(__Module__Database database) : IClassFixture<__Module__Database>, IDisposable
+public sealed class ItemsControllerTests(__Module__HostDatabase database) : IClassFixture<__Module__HostDatabase>, IDisposable
 {
     private const string ItemsPath = "/api/v1/__module__/items";
 

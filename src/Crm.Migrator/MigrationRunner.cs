@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Crm.Migrator;
 
 /// <summary>Applies each module's migrations, through the DbContexts the module registers in IModule.AddServices.</summary>
-internal static class MigrationRunner
+public static class MigrationRunner
 {
     /// <summary>The only environment where <c>reset</c> may drop the database (the devcontainer's).</summary>
     public const string ResetEnvironment = "Development";

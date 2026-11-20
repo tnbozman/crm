@@ -17,6 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src\Modules\Crm.__Module__\Crm.__Module__.csproj" />
     <ProjectReference Include="..\..\..\..\src\Crm.Host\Crm.Host.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Crm.Migrator\Crm.Migrator.csproj" />
     <ProjectReference Include="..\..\..\..\src\Crm.Testing\Crm.Testing.csproj" />
   </ItemGroup>
 

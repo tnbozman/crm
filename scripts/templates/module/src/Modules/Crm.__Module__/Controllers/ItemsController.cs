@@ -13,7 +13,10 @@ namespace Crm.__Module__.Controllers;
 [Authorize(Policy = Policies.Admin)]
 internal sealed class ItemsController(IItemService items) : ControllerBase
 {
-    [HttpGet("{id:guid}")]
+    /// <summary>Route names are global: every module may have an ItemsController, so the name carries the module.</summary>
+    private const string GetRoute = "__Module__.Items.Get";
+
+    [HttpGet("{id:guid}", Name = GetRoute)]
     [ProducesResponseType<ItemResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public Task<ItemResponse> Get(Guid id, CancellationToken cancellationToken) => items.GetAsync(id, cancellationToken);
@@ -24,6 +27,6 @@ internal sealed class ItemsController(IItemService items) : ControllerBase
     public async Task<ActionResult<ItemResponse>> Create(CreateItemRequest request, CancellationToken cancellationToken)
     {
         var item = await items.CreateAsync(request, cancellationToken).ConfigureAwait(false);
-        return CreatedAtAction(nameof(Get), new { id = item.Id }, item);
+        return CreatedAtRoute(GetRoute, new { id = item.Id }, item);
     }
 }

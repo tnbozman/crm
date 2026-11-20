@@ -64,6 +64,14 @@ expect_dir src/web/src/features/zzz
 grep -q 'src/Modules/Crm.Zzz/Crm.Zzz.csproj' Crm.slnx || fail "Crm.slnx does not include the module"
 grep -q 'tests/Modules/Zzz/Crm.Zzz.Tests/Crm.Zzz.Tests.csproj' Crm.slnx || fail "Crm.slnx does not include the module's tests"
 
+step "scaffolds Yyy and adds the module exchange fixture (scripts/checks/module-exchange)"
+"${MAKE[@]}" module-new name=Yyy >/dev/null || { echo "FAIL: make module-new name=Yyy failed" >&2; exit 1; }
+(cd "$ROOT/scripts/checks/module-exchange" && find . -type f ! -name README.md -print0 | tar --null -T - -cf -) | tar -xf -
+# Yyy registers the fixture's service and subscriber (fully qualified: no usings to add).
+sed -i 's|^\(\s*\)services.AddRequestHandler<GetYyyItemSummaryHandler>();|&\n\1services.AddScoped<Crm.Yyy.Services.IZzzMirrorService, Crm.Yyy.Services.ZzzMirrorService>();\n\1services.AddEventSubscriber<Crm.Yyy.Handlers.ZzzItemCreatedSubscriber>();|' \
+    src/Modules/Crm.Yyy/YyyModule.cs
+grep -q ZzzItemCreatedSubscriber src/Modules/Crm.Yyy/YyyModule.cs || fail "could not register the exchange subscriber in YyyModule.cs"
+
 step "a second scaffold of the same name is refused"
 if "${MAKE[@]}" module-new name=Zzz >/dev/null 2>&1; then
     fail "make module-new name=Zzz succeeded twice"
@@ -106,6 +114,11 @@ grep -q "migrated Zzz" <<<"$reset_output" || fail "make db-reset did not migrate
 [[ "$(sql "SELECT COUNT(*) FROM [$CHECK_DB].sys.tables t JOIN [$CHECK_DB].sys.schemas s ON s.schema_id = t.schema_id WHERE s.name = N'zzz' AND t.name = N'Items'")" == 1 ]] \
     || fail "zzz.Items does not exist after make db-reset"
 "${MAKE[@]}" migrate DEV_DB="$CHECK_DB" || fail "make migrate on an up-to-date database failed"
+
+step "Zzz and Yyy exchange an event and a query through the mediator (API-level, real SQL Server)"
+ConnectionStrings__Crm="Server=${CRM_SQL_SERVER:-};Database=$CHECK_DB;User ID=${CRM_SQL_USER:-sa};Password=${CRM_SQL_PASSWORD:-};TrustServerCertificate=true" \
+    dotnet test --project tests/Crm.Host.Tests -p:SkipFrontend=true --filter-class Crm.Host.Tests.ModuleExchangeTests \
+    || fail "the module exchange test failed"
 
 echo ""
 if [[ $ERRORS -eq 0 ]]; then

@@ -10,7 +10,7 @@ using Xunit;
 namespace Crm.__Module__.Tests.Persistence;
 
 [Trait("Category", TestCategories.Integration)]
-public sealed class __Module__OutboxRelayServiceTests(__Module__Database database) : IClassFixture<__Module__Database>, IDisposable
+public sealed class __Module__OutboxRelayServiceTests(__Module__HostDatabase database) : IClassFixture<__Module__HostDatabase>, IDisposable
 {
     private readonly __Module__ApiFactory factory = new(database.ConnectionString);
 
