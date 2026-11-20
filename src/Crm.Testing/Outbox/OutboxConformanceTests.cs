@@ -133,4 +133,32 @@ public abstract class OutboxConformanceTests : IAsyncLifetime
         (await running).ShouldBe(2);
         blocked.Published.Select(e => e.MessageId).ShouldBe([first, second]);
     }
+
+    [Fact]
+    public async Task Relay_ResumesAfterRestart_WithoutLosingMessages()
+    {
+        Guid[] written =
+        [
+            await Harness.SaveChangeWithEventAsync(commit: true, Cancellation),
+            await Harness.SaveChangeWithEventAsync(commit: true, Cancellation),
+            await Harness.SaveChangeWithEventAsync(commit: true, Cancellation),
+        ];
+        using var stopping = CancellationTokenSource.CreateLinkedTokenSource(Cancellation);
+        var beforeStop = new RecordingEventPublisher
+        {
+            OnPublish = async (_, _) => await stopping.CancelAsync(), // the host stops during the first delivery
+        };
+
+        await Should.ThrowAsync<OperationCanceledException>(() => Harness.RunRelayOnceAsync(beforeStop, stopping.Token));
+        var afterRestart = new RecordingEventPublisher();
+        var published = await Harness.RunRelayOnceAsync(afterRestart, Cancellation);
+
+        beforeStop.Published.Count.ShouldBe(1, "the relay stops between messages when the host stops");
+        published.ShouldBe(2);
+        beforeStop.Published.Concat(afterRestart.Published).Select(e => e.MessageId).ShouldBe(written, "each message exactly once, in order");
+        foreach (var messageId in written)
+        {
+            (await Harness.FindOutboxMessageAsync(messageId, Cancellation)).ShouldNotBeNull().ProcessedAt.ShouldNotBeNull();
+        }
+    }
 }

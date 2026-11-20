@@ -88,6 +88,9 @@ internal sealed partial class __Module__OutboxRelay(
         var published = 0;
         foreach (var message in due)
         {
+            // Stop between messages when the host stops; the rest stay pending for the next relay.
+            cancellationToken.ThrowIfCancellationRequested();
+
             try
             {
                 // Each delivery gets its own scope, so subscribers get their own DbContexts and transactions.
