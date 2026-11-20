@@ -34,12 +34,16 @@ done < <(find "$TEMPLATES" -type f -print0 | sort -z)
 PROJECT="src/Modules/Crm.$NAME/Crm.$NAME.csproj"
 TESTS="tests/Modules/$NAME/Crm.$NAME.Tests/Crm.$NAME.Tests.csproj"
 
-echo "module-new: adding the module to Crm.slnx and Crm.Host"
+echo "module-new: adding the module to Crm.slnx, Crm.Host and Crm.Migrator"
 dotnet sln Crm.slnx add --solution-folder src/Modules "$PROJECT" >/dev/null
 dotnet sln Crm.slnx add --solution-folder tests/Modules "$TESTS" >/dev/null
-dotnet reference add --project src/Crm.Host/Crm.Host.csproj "$PROJECT" >/dev/null
-grep -q "$MARKER" src/Crm.Host/HostModules.cs || die "src/Crm.Host/HostModules.cs has lost its '$MARKER' line"
-sed -i "s|^\(\s*\)// $MARKER|\1new Crm.$NAME.${NAME}Module(),\n&|" src/Crm.Host/HostModules.cs
+
+# The host composes every module; the Migrator applies every module's migrations (ADR-013).
+for list in src/Crm.Host/HostModules.cs src/Crm.Migrator/MigratorModules.cs; do
+    grep -q "$MARKER" "$list" || die "$list has lost its '$MARKER' line"
+    dotnet reference add --project "$(dirname "$list")/$(basename "$(dirname "$list")").csproj" "$PROJECT" >/dev/null
+    sed -i "s|^\(\s*\)// $MARKER|\1new Crm.$NAME.${NAME}Module(),\n&|" "$list"
+done
 
 echo "module-new: generating the initial migration"
 bash scripts/migration-add.sh "$NAME" Initial

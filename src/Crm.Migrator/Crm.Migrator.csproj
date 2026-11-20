@@ -4,4 +4,12 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Crm.SharedKernel\Crm.SharedKernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Crm.Architecture.Tests" />
+  </ItemGroup>
+
 </Project>
