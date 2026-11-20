@@ -4,6 +4,7 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/../.."
+ROOT=$PWD
 
 ERRORS=0
 fail() { echo "FAIL: $*" >&2; ERRORS=$((ERRORS + 1)); }
@@ -60,6 +61,15 @@ fi
 step "the solution builds and the architecture tests pass"
 dotnet build Crm.slnx -c Debug -p:SkipFrontend=true -nologo -v quiet || fail "dotnet build failed"
 "${MAKE[@]}" test-arch || fail "make test-arch failed"
+
+step "the generated code is formatted (make lint)"
+dotnet format Crm.slnx --verify-no-changes --include src/Modules/Crm.Zzz/ tests/Modules/Zzz/ src/Crm.Mediator/Contracts/Zzz/ \
+    || fail "generated C# is not formatted; fix the templates in scripts/templates/module"
+(cd "$ROOT/src/web" && node_modules/.bin/prettier --check "$WORK/src/web/src/features/zzz") \
+    || fail "the generated web feature folder is not formatted"
+
+step "the generated module's own tests pass (unit, and integration against SQL Server)"
+dotnet test --project tests/Modules/Zzz/Crm.Zzz.Tests -p:SkipFrontend=true || fail "the generated Crm.Zzz.Tests failed"
 
 echo ""
 if [[ $ERRORS -eq 0 ]]; then

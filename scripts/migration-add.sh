@@ -21,4 +21,5 @@ dotnet tool run dotnet-ef migrations add "$NAME" \
     --output-dir Persistence/Migrations
 
 # dotnet-ef generates public migration classes; module types are internal (Module_Types_AreInternal_ExceptTheModuleClass).
-sed -i -E 's/^(\s*)public (partial class)/\1internal \2/' "$MIGRATIONS"/*.cs
+# dotnet-ef also writes a byte order mark, which .editorconfig (charset = utf-8) and make lint reject.
+sed -i -E -e '1s/^\xEF\xBB\xBF//' -e 's/^(\s*)public (partial class)/\1internal \2/' "$MIGRATIONS"/*.cs
