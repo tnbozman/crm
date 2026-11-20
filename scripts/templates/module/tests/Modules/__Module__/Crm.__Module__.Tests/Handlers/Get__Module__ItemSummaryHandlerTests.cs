@@ -1,8 +1,11 @@
 using Crm.__Module__.Dtos;
 using Crm.__Module__.Handlers;
+using Crm.__Module__.Persistence.Messaging;
 using Crm.__Module__.Services;
 using Crm.Mediator.Contracts.__Module__;
+using Crm.SharedKernel.Security;
 using Crm.Testing;
+using Crm.Testing.Outbox;
 using Shouldly;
 using Xunit;
 
@@ -15,7 +18,7 @@ public sealed class Get__Module__ItemSummaryHandlerTests(__Module__Database data
     public async Task Handle_KnownItem_ReturnsItsSummary()
     {
         await using var db = database.CreateDbContext();
-        var items = new ItemService(db, TimeProvider.System);
+        var items = new ItemService(db, new Outbox(db, new TestMessageContext(), CurrentUser.Anonymous, TimeProvider.System), TimeProvider.System);
         var created = await items.CreateAsync(new CreateItemRequest("Example"), TestContext.Current.CancellationToken);
 
         var summary = await new Get__Module__ItemSummaryHandler(items)

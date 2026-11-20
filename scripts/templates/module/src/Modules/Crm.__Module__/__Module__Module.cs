@@ -1,6 +1,7 @@
 using System.Reflection;
 using Crm.__Module__.Handlers;
 using Crm.__Module__.Persistence;
+using Crm.__Module__.Persistence.Messaging;
 using Crm.__Module__.Services;
 using Crm.Mediator;
 using Crm.SharedKernel.Modules;
@@ -21,6 +22,7 @@ public sealed class __Module__Module : IModule
     {
         services.TryAddSingleton(TimeProvider.System);
         services.Add__Module__DbContext(configuration);
+        services.AddScoped<IOutbox, Outbox>();
         services.AddScoped<IItemService, ItemService>();
         services.AddRequestHandler<Get__Module__ItemSummaryHandler>();
     }
