@@ -17,7 +17,7 @@
     "api:generate": "openapi-typescript ../../openapi/Crm.Host.json -o src/api/schema.d.ts"
   },
   "dependencies": {
-    "@openvue/core": "1.1.1",
+    "@openvue/core": "1.2.0",
     "openvue": "1.1.1",
     "pinia": "4.1.0",
     "vue": "3.5.45",
